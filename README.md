@@ -22,6 +22,9 @@ Optional: Add your own branch
 `git add .`
 
 `git commit -m MESSAGE`
+<<<<<<< HEAD
+=======
 
+>>>>>>> 6c02d1d245a8d29333c0a9cbfd24e915c2208b52
 `git push origin YOUR_BRANCH_NAME`
 
