@@ -16,5 +16,5 @@ Optional: Add your own branch
 
 `git add .`
 `git commit -m MESSAGE`
-`git push origin main`
+`git push origin YOUR_BRANCH_NAME`
 
