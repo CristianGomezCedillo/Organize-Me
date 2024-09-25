@@ -1,6 +1,14 @@
 # Organize-Me
 
-##Set Up GitHub
+Expo Tutorial: https://docs.expo.dev/tutorial/build-a-screen/
+DO NOT create a new expo project.
+Navigate into the inner Organize-Me folder and type `npm run web`
+
+OR `npm run ios`   `npm run android`
+
+JUST REFRESH BROWSER TO SEE CHANGES (localhost:8081)
+
+#Set Up GitHub
 
 Clone your forked repository
 
