@@ -12,7 +12,7 @@ import {
   ScrollView,
   Platform,
 } from "react-native";
-import Task from "../components/Task";
+import Task from "../../components/Task";
 
 export default function ToDoPage() {
   const [task, setTask] = React.useState();
