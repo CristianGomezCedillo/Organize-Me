@@ -13,6 +13,7 @@ import {
   Platform,
 } from "react-native";
 import Task from "../../components/Task";
+//import { supabase } from '../../supabaseClient';
 
 export default function ToDoPage() {
   const [task, setTask] = React.useState();
