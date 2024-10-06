@@ -41,7 +41,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         flexDirection: 'row',
-        fontFamily: "Helvetica",
       },
       buttonIcon: {
         paddingRight: 8,
