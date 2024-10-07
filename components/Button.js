@@ -40,8 +40,7 @@ const styles = StyleSheet.create({
         height: '100%',
         alignItems: 'center',
         justifyContent: 'center',
-        flexDirection: 'row',
-        fontFamily: "Helvetica",
+        flexDirection: 'row'
       },
       buttonIcon: {
         paddingRight: 8,
