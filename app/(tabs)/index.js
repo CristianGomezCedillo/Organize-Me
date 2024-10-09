@@ -10,6 +10,8 @@ import { format, isAfter } from 'date-fns';
 import { differenceInDays } from 'date-fns';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome } from '@expo/vector-icons';
+import { Platform } from 'react-native';
+
 
 // Screen dimensions for graph scaling
 const screenWidth = Dimensions.get('window').width;
@@ -116,7 +118,6 @@ export default function Home() {
     <ScrollView style={styles.container}>
       {/* <ImageViewer placeholderImageSource={AppIconImage} /> */}
 
-      <Text style={styles.title}>ORGANIZE ME</Text>
 
          <View style={styles.dashboard}>
         <Text style={styles.dashboardTitle}>Streak Overview</Text>
@@ -145,7 +146,7 @@ export default function Home() {
             <Text style={styles.chartTitle}>Task Breakdown (Pie Chart)</Text>
             <PieChart
               data={pieData}
-              width={screenWidth - 40}
+              width={screenWidth - 30}
               height={220}
               chartConfig={chartConfig}
               accessor={'tasks'}
@@ -211,7 +212,7 @@ const styles = StyleSheet.create({
   dashboard: {
     margin: 20,
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#808080',
     borderRadius: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

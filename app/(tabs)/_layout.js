@@ -1,12 +1,13 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
+
 export default function Layout() {
   return (
     <Tabs
       screenOptions={({ route }) => ({
-        tabBarActiveTintColor: 'yellow',
-        tabBarInactiveTintColor: 'darkseagreen',
+        tabBarActiveTintColor: 'white',
+        tabBarInactiveTintColor: 'limegreen',
         tabBarIcon: ({ color, size }) => {
           let iconName;
 
@@ -24,11 +25,11 @@ export default function Layout() {
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarStyle: {
-          backgroundColor: 'darkslategray', // Tab bar background color
+          backgroundColor: '#806043', // Tab bar background color
           height: 60, // Adjust the height of the tab bar
         },
         headerStyle: {
-          backgroundColor: 'darkslategray', // Header background color
+          backgroundColor: '#806043', // Header background color
         },
         headerTitleStyle: {
           color: 'darkseagreen', // Color for the header title
