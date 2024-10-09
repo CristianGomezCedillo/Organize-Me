@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Button, StyleSheet, Alert } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { supabase } from './supabaseClient';
-import EditTaskModal from './EditTaskModal'; // Modal for editing the task
+import EditTaskModal from './EditTaskModal';
+import { isAfter } from 'date-fns';
 
 const Task = ({ taskId, onEdit, onDelete }) => {
-  const [task, setTask] = useState(null); // State for the task details
-  const [isEditModalVisible, setEditModalVisible] = useState(false); // Modal visibility state
+  const [task, setTask] = useState(null);
+  const [isEditModalVisible, setEditModalVisible] = useState(false);
 
-  // Fetch task details from Supabase
   const fetchTask = async () => {
     try {
       const { data, error } = await supabase
         .from('tasks_table')
         .select('*')
         .eq('id', taskId)
-        .single(); // Use .single() if you're fetching one record
+        .single();
 
       if (error) throw error;
 
@@ -25,12 +25,10 @@ const Task = ({ taskId, onEdit, onDelete }) => {
     }
   };
 
-  // Fetch task details when the component mounts
   useEffect(() => {
     fetchTask();
   }, [taskId]);
 
-  // Update task handler
   const handleUpdate = async (updatedTask) => {
     try {
       const { error } = await supabase
@@ -44,76 +42,166 @@ const Task = ({ taskId, onEdit, onDelete }) => {
       } else {
         Alert.alert('Task updated successfully');
         setTask(updatedTask);
-        setEditModalVisible(false); // Close the edit modal
+        setEditModalVisible(false);
       }
     } catch (err) {
       console.error('Error:', err);
     }
   };
 
-  // Delete task handler
   const handleDelete = async () => {
-    try {
-      const { error } = await supabase
-        .from('tasks_table')
-        .delete()
-        .eq('id', task.id);
+    Alert.alert(
+      'Delete Task',
+      'Are you sure you want to delete this task?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'OK',
+          onPress: async () => {
+            try {
+              const { error } = await supabase
+                .from('tasks_table')
+                .delete()
+                .eq('id', task.id);
 
-      if (error) {
-        console.error('Error deleting task:', error);
-        Alert.alert('Error deleting task:', error.message);
-      } else {
-        Alert.alert('Task deleted successfully');
-        onDelete(task.id); // Notify parent to remove task from list
-      }
-    } catch (err) {
-      console.error('Error:', err);
-    }
+              if (error) {
+                console.error('Error deleting task:', error);
+                Alert.alert('Error deleting task:', error.message);
+              } else {
+                Alert.alert('Task deleted successfully');
+                onDelete(task.id);
+              }
+            } catch (err) {
+              console.error('Error:', err);
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
   };
 
-  // Ensure task is loaded before rendering
   if (!task) return <Text>Loading task...</Text>;
 
+  const dueDate = new Date(task.due_date);
+  const isOverdue = isAfter(new Date(), dueDate);
+
   return (
-    <View style={styles.taskContainer}>
-      <Text style={styles.taskName}>{task.task_name}</Text>
-      <Text>{task.description}</Text>
-      <Text>Time to take: {task.time_to_take}</Text>
-      <Text>Due date: {new Date(task.due_date).toLocaleDateString()}</Text>
-      <Text>Repeating: {task.repeating}</Text>
-      <Text>Completed: {task.is_completed ? 'Yes' : 'No'}</Text>
+    <TouchableOpacity
+      style={[styles.taskContainer, task.is_completed && styles.completedTask]}
+      onPress={() => setEditModalVisible(true)}
+    >
+      <View style={styles.taskContainer}>
+        <View style={styles.taskHeader}>
+          <Text style={styles.taskName}>{task.task_name}</Text>
+          <View style={[styles.statusBadge, task.is_completed ? styles.completedBadge : (isOverdue ? styles.overdueBadge : styles.pendingBadge)]}>
+            <Text style={styles.statusText}>
+              {task.is_completed ? 'Completed' : (isOverdue ? 'Overdue' : 'Pending')}
+            </Text>
+          </View>
+        </View>
+        <Text style={styles.description}>{task.description}</Text>
+        <View style={styles.taskDetails}>
+          <Text style={styles.detailText}>📅 Due: {new Date(task.due_date).toLocaleDateString()}</Text>
+          <Text style={styles.detailText}>⏱️ Time: {task.time_to_take}</Text>
+          <Text style={styles.detailText}>🔄 Repeats: Every {task.repeating} days</Text>
+        </View>
 
-      {/* Buttons */}
-      <Button title="Edit Task" onPress={() => setEditModalVisible(true)} />
-      <Button title="Delete Task" onPress={handleDelete} color="red" />
+        {/* Container for the delete button */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+            <Text style={styles.deleteButtonText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
 
-      {/* Edit Task Modal */}
-      <EditTaskModal
-        visible={isEditModalVisible}
-        task={task}
-        onClose={() => setEditModalVisible(false)}
-        onSave={handleUpdate}
-      />
-    </View>
+        <EditTaskModal
+          visible={isEditModalVisible}
+          task={task}
+          onClose={() => setEditModalVisible(false)}
+          onSave={handleUpdate}
+        />
+      </View>
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   taskContainer: {
-    padding: 15,
-    marginVertical: 10,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 8,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowRadius: 4,
     elevation: 3,
+  },
+  taskHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   taskName: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    flex: 1,
+  },
+  detailText: {
+    fontSize: 14,
+    color: '#666666',
+    marginRight: 12,
+    marginTop: 4,
+  },
+  taskDetails: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  description: {
+    fontSize: 14,
+    color: '#666666',
+    marginBottom: 8,
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  pendingBadge: {
+    backgroundColor: '#007AFF',
+  },
+  completedBadge: {
+    backgroundColor: '#34C759',
+  },
+  overdueBadge: {
+    backgroundColor: '#FF3B30',
+  },
+  statusText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end', // Aligns the button to the right
+    marginTop: 8, // Space between task details and button
+  },
+  deleteButton: {
+    backgroundColor: '#FF3B30', // Red color for delete
+    borderRadius: 20, // Makes it oval
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  deleteButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 
 export default Task;
+

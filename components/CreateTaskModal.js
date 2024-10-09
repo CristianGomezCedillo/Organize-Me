@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, View, TextInput, Button, StyleSheet, Alert, Switch, Text } from 'react-native';
-import { Picker } from '@react-native-picker/picker'; // Import Picker from the correct package
+import { Modal, View, Text, TextInput, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { supabase } from './supabaseClient';
 
 const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
@@ -34,87 +33,148 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
   };
 
   return (
-    <Modal visible={isVisible} animationType="slide">
-      <View style={styles.modalContainer}>
-        {/* Task Name */}
+    <Modal
+    animationType="slide"
+    transparent={true}
+    visible={isVisible}
+  >
+    <View style={styles.modalOverlay}>
+      <View style={styles.modalView}>
+        <Text style={styles.modalTitle}>Create Task</Text>
+
         <TextInput
-          style={styles.input}
           placeholder="Task Name"
-          value={newTask.task_name}
+          value={newTask.task_Name}
           onChangeText={(text) => setNewTask({ ...newTask, task_name: text })}
-        />
-        
-        {/* Task Description */}
-        <TextInput
           style={styles.input}
-          placeholder="Description"
+        />
+
+        <TextInput
+          placeholder="Description (optional)"
           value={newTask.description}
           onChangeText={(text) => setNewTask({ ...newTask, description: text })}
+          style={[styles.input, styles.textArea]}
+          multiline
+          numberOfLines={3}
         />
-        
-        {/* Time to Take */}
+
         <TextInput
-          style={styles.input}
-          placeholder="Time to Take (e.g., 2 hours)"
-          value={newTask.time_to_take}
+          placeholder="Time to Take (optional)"
+          value={newTask.timeToTake}
           onChangeText={(text) => setNewTask({ ...newTask, time_to_take: text })}
+          style={styles.input}
         />
-        
-        {/* Due Date */}
+
         <TextInput
-          style={styles.input}
           placeholder="Due Date (YYYY-MM-DD)"
-          value={newTask.due_date}
+          value={newTask.dueDate}
           onChangeText={(text) => setNewTask({ ...newTask, due_date: text })}
+          style={styles.input}
         />
 
-        {/* Repeating Picker */}
-        <Picker
-          selectedValue={newTask.repeating}
-          style={styles.input}
+        <TextInput
+          placeholder="Repeat every X days (optional)"
+          value={newTask.repeating}
           onValueChange={(itemValue) => setNewTask({ ...newTask, repeating: itemValue })}
+          style={styles.input}
+          keyboardType="numeric"
+        />
+
+        <TouchableOpacity 
+          style={[styles.completedButton, newTask.is_completed && styles.completedButtonActive]}
+          onPress={(value) => setNewTask({ ...newTask, is_completed: value })}
         >
-          <Picker.Item label="Non-repeating" value={0} />
-          <Picker.Item label="Daily" value={1} />
-          <Picker.Item label="Weekly" value={2} />
-          <Picker.Item label="Monthly" value={3} />
-        </Picker>
+          <Text style={styles.completedButtonText}>
+            {newTask.is_completed ? '✓ Completed' : 'Mark as Completed'}
+          </Text>
+        </TouchableOpacity>
 
-        {/* Completed Switch */}
-        <View style={styles.switchContainer}>
-          <Switch
-            value={newTask.is_completed}
-            onValueChange={(value) => setNewTask({ ...newTask, is_completed: value })}
-          />
-          <Text>{newTask.is_completed ? 'Completed' : 'Not Completed'}</Text>
+        <View style={styles.modalButtons}>
+          <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+            <Text style={styles.buttonText}>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.submitButton} onPress={handleCreate}>
+            <Text style={styles.buttonText}>Create</Text>
+          </TouchableOpacity>
         </View>
-
-        {/* Create and Cancel Buttons */}
-        <Button title="Create Task" onPress={handleCreate} />
-        <Button title="Cancel" onPress={onClose} />
       </View>
-    </Modal>
+    </View>
+  </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  modalContainer: {
-    padding: 20,
-    backgroundColor: '#fff',
+  modalOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalView: {
+    width: '90%',
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    marginBottom: 20,
+    textAlign: 'center',
   },
   input: {
+    width: '100%',
     borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 10,
-    marginVertical: 10,
+    borderColor: '#E5E5EA',
     borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    fontSize: 16,
   },
-  switchContainer: {
+  modalButtons: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 10,
+    justifyContent: 'space-between',
+  },
+  completedButton: {
+    width: '100%',
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: '#E5E5EA',
+    marginBottom: 16,
+  },
+  completedButtonActive: {
+    backgroundColor: '#34C759',
+  },
+  completedButtonText: {
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000000',
+  },
+  cancelButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: '#FF3B30',
+    marginRight: 8,
+  },
+  submitButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: '#007AFF',
+    marginLeft: 8,
+  },
+  buttonText: {
+    color: '#ffffff',
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

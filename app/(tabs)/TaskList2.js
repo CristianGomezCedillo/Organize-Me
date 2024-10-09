@@ -1,5 +1,17 @@
+/*  TODO
+
+ADD SEARCH function back
+add filters back
+fix complete button when creating a task
+add user authentication
+create task button as a plus symbol -- done.
+remove delete button in favor of a slide to delete function.
+
+*/ //  TODO
+
+
 import React, { useState, useEffect } from 'react';
-import { View, FlatList, Button, StyleSheet } from 'react-native';
+import { View, FlatList, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { supabase } from '../../components/supabaseClient';
 import Task from '../../components/Task';
 import EditTaskModal from '../../components/EditTaskModal';
@@ -9,7 +21,7 @@ const TaskList = () => {
   const [tasks, setTasks] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isEditModalVisible, setEditModalVisible] = useState(false);
-  const [isCreateModalVisible, setCreateModalVisible] = useState(false); // State for create task modal
+  const [isCreateModalVisible, setCreateModalVisible] = useState(false);
 
   // Fetch tasks from Supabase
   const fetchTasks = async () => {
@@ -65,9 +77,11 @@ const TaskList = () => {
       />
 
       {/* Create Task Button */}
-      <View style={styles.createButtonContainer}>
-        <Button title="Create Task" onPress={handleCreate} />
-      </View>
+      <TouchableOpacity style={styles.fabButton} onPress={handleCreate}>
+        <Text style={styles.fabText}>+</Text>
+      </TouchableOpacity>
+
+
 
       {/* Render EditTaskModal */}
       {isEditModalVisible && (
@@ -101,6 +115,27 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: '#f9f9f9',
     borderRadius: 8,
+  },
+  fabButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  fabText: {
+    fontSize: 24,
+    color: '#ffffff',
+    fontWeight: 'bold',
   },
 });
 
