@@ -2,11 +2,16 @@
 
 ADD SEARCH function back
 add filters back
-fix complete button when creating a task
+take out the complete field when creating task
 add user authentication
 create task button as a plus symbol -- done.
 remove delete button in favor of a slide to delete function.
+put in ryans checkbox
 
+task generes (personal, fitness, study, etc)
+add icon to show task genre
+priorities to tasks (high priority, low priority)
+additional date that tells the app when to send a notification
 */ //  TODO
 
 
