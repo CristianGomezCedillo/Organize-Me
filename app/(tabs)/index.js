@@ -112,9 +112,9 @@ export default function Home() {
   };
 
   const pieData = [
-    { name: 'Pending', tasks: pendingTasks, color: '#F76C5E', legendFontColor: '#333', legendFontSize: 12 },
+    { name: 'Pending', tasks: pendingTasks, color: 'Blue', legendFontColor: '#333', legendFontSize: 12 },
     { name: 'Completed', tasks: completedTasks, color: '#4CAF50', legendFontColor: '#333', legendFontSize: 12 },
-    { name: 'Overdue', tasks: overdueTasks, color: '#FFCC00', legendFontColor: '#333', legendFontSize: 12 },
+    { name: 'Overdue', tasks: overdueTasks, color: 'Red', legendFontColor: '#333', legendFontSize: 12 },
   ];
 
   return (
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'cornsilk',
   },
   title: {
-    color: 'darkseagreen',
+    color: 'darkbrown',
     fontSize: 50,
     textAlign: 'center',
     marginBottom: 20,
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   dashboard: {
     margin: 20,
     padding: 20,
-    backgroundColor: '#808080',
+    backgroundColor: 'white',
     borderRadius: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   dashboardTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: 'darkseagreen',
+    color: 'darkbrown',
     marginBottom: 10,
     textAlign: 'center',
   },
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   loadingText: {
     textAlign: 'center',
     fontSize: 16,
-    color: '#666',
+    color: 'red',
   },
   chartTitle: {
     fontSize: 18,
@@ -280,11 +280,11 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 16,
-    color: '#333',
+    color: 'darkbrown',
   },
   statValue: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: 'darkbrown',
   },
 });

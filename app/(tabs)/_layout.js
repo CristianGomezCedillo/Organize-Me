@@ -6,8 +6,8 @@ export default function Layout() {
   return (
     <Tabs
       screenOptions={({ route }) => ({
-        tabBarActiveTintColor: 'white',
-        tabBarInactiveTintColor: 'limegreen',
+        tabBarActiveTintColor: '#ADD8E6',
+        tabBarInactiveTintColor: 'yellow',
         tabBarIcon: ({ color, size }) => {
           let iconName;
 
@@ -25,14 +25,14 @@ export default function Layout() {
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarStyle: {
-          backgroundColor: '#806043', // Tab bar background color
+          backgroundColor: '#228B22', // Tab bar background color
           height: 60, // Adjust the height of the tab bar
         },
         headerStyle: {
-          backgroundColor: '#806043', // Header background color
+          backgroundColor: '#228B22', // Header background color
         },
         headerTitleStyle: {
-          color: 'darkseagreen', // Color for the header title
+          color: 'yellow', // Color for the header title
           fontSize: 20, // Font size for the header title
         },
       })}
