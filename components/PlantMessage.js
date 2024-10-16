@@ -1,27 +1,41 @@
 import { Modal, View, Text, Pressable, StyleSheet, Image, TouchableWithoutFeedback } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
 
 
 
+// Use forwardRef to expose functions to parent component
+const PlantMessage = forwardRef(({ initialText }, ref) => {
+  const [isVisible, setIsVisible] = useState(false); // State to control modal visibility
+  const [message, setMessage] = useState(initialText || 'Default message'); // State for message text
+  const [imageSource, setImageSource] = useState("../../assets/images/Plants/plant1_complete.png")
+  // Expose functions to parent through the ref
+  useImperativeHandle(ref, () => ({
+    show: () => setIsVisible(true),
+    hide: () => setIsVisible(false),
+    changeMessage: (newText) => setMessage(newText),
+    changeImageSource: (newSrc) => setImageSource(newSrc),
+  }));
 
-export default function PlantMessage({ isVisible, text, onClose, imageSource="../../assets/images/Plants/plant1_complete.png" }) {
+
   return (
-    <TouchableWithoutFeedback onPress={onClose}>
+    <TouchableWithoutFeedback onPress={() => setIsVisible(false)}>
     <Modal animationType="slide" transparent={true} visible={isVisible}>
       <View style={styles.modalContent}>
-          <Pressable onPress={onClose}>
+          <Pressable onPress={() => setIsVisible(false)}>
             <MaterialIcons name="close" color="#fff" size={22} />
           </Pressable>
           <View style={styles.messageContainer}>
             <Image source={imageSource} style={styles.image}/>
-            <Text style={styles.text}>{text}</Text>
+            <Text style={styles.text}>{message}</Text>
           </View>
       </View>
       
     </Modal>
     </TouchableWithoutFeedback>
   );
-}
+});
+
 
 const styles = StyleSheet.create({
   modalContent: {
@@ -33,7 +47,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     padding: 18,
-    margin: 18,
+    margin: 0,
+    flex:1,
     flexDirection: 'row',
   },
   text: {
@@ -61,6 +76,8 @@ const styles = StyleSheet.create({
   messageContainer: {
     flex: 1,
     flexDirection: 'row',
-    //paddingHorizontal: 10, // Adds some padding for the message
+    paddingHorizontal: 10, // Adds some padding for the message
   },
 });
+
+export default PlantMessage;
