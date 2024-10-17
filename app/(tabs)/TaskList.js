@@ -15,8 +15,7 @@ priorities to tasks (high priority, low priority)
 additional date that tells the app when to send a notification (potentially (still working on this idea))
 
 */ //  TODO
-
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, FlatList, TouchableOpacity, StyleSheet, Text, TextInput } from 'react-native';
 import { supabase } from '../../components/supabaseClient';
 import Task from '../../components/Task';
@@ -31,10 +30,25 @@ const TaskList = () => {
   const [isCreateModalVisible, setCreateModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [user, setUser] = useState(null);
+
+  // Fetch current user session
+  const fetchUser = async () => {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error('Error fetching user session:', error);
+    } else {
+      setUser(session?.user ?? null);
+    }
+  };
 
   // Fetch tasks from Supabase
   const fetchTasks = async () => {
-    const { data, error } = await supabase.from('tasks_table').select('*');
+    const { data, error } = await supabase
+      .from('tasks_table')
+      .select('*')
+      .or(`user_id.eq.${user?.id},user_id.is.null`); // Show tasks for user and unassigned tasks
+    
     if (error) {
       console.error('Error fetching tasks:', error);
     } else {
@@ -43,8 +57,14 @@ const TaskList = () => {
   };
 
   useEffect(() => {
-    fetchTasks();
+    fetchUser(); // Fetch the current user
   }, []);
+
+  useEffect(() => {
+    if (user !== null) {
+      fetchTasks(); // Fetch tasks after user is set
+    }
+  }, [user]);
 
   // Handle task deletion
   const handleDelete = (taskId) => {
@@ -85,8 +105,8 @@ const TaskList = () => {
       const dueDate = new Date(task.due_date);
       if (filterStatus === 'all') return true;
       if (filterStatus === 'completed') return taskNameMatch && task.is_completed;
-      if (filterStatus === 'pending') return taskNameMatch && !task.is_completed && !isAfter(new Date(), new Date(task.due_date));
-      if (filterStatus === 'overdue') return taskNameMatch && !task.is_completed && isAfter(new Date(), new Date(task.due_date));
+      if (filterStatus === 'pending') return taskNameMatch && !task.is_completed && !isAfter(new Date(), dueDate);
+      if (filterStatus === 'overdue') return taskNameMatch && !task.is_completed && isAfter(new Date(), dueDate);
 
       return false;
     });
