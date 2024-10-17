@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, Dimensions, ScrollView } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { BarChart, PieChart } from 'react-native-chart-kit';
 import { supabase } from '../../components/supabaseClient';
 import Button from '../../components/Button';
@@ -11,12 +11,15 @@ import { differenceInDays } from 'date-fns';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome } from '@expo/vector-icons';
 import { Platform } from 'react-native';
+import PlantMessage from "../../components/PlantMessage";
+import Plant from '../../components/Plant';
 
 
 // Screen dimensions for graph scaling
 const screenWidth = Dimensions.get('window').width;
 
 export default function Home() {
+  const messageRef = useRef(null); //for the plantmessage
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pendingTasks, setPendingTasks] = useState(0);
@@ -109,28 +112,25 @@ export default function Home() {
   };
 
   const pieData = [
-    { name: 'Pending', tasks: pendingTasks, color: '#F76C5E', legendFontColor: '#333', legendFontSize: 12 },
+    { name: 'Pending', tasks: pendingTasks, color: 'Blue', legendFontColor: '#333', legendFontSize: 12 },
     { name: 'Completed', tasks: completedTasks, color: '#4CAF50', legendFontColor: '#333', legendFontSize: 12 },
-    { name: 'Overdue', tasks: overdueTasks, color: '#FFCC00', legendFontColor: '#333', legendFontSize: 12 },
+    { name: 'Overdue', tasks: overdueTasks, color: 'Red', legendFontColor: '#333', legendFontSize: 12 },
   ];
 
   return (
+    <View style={styles.halfContainer}>
     <ScrollView style={styles.container}>
       {/* <ImageViewer placeholderImageSource={AppIconImage} /> */}
 
 
          <View style={styles.dashboard}>
-        <Text style={styles.dashboardTitle}>Streak Overview</Text>
-        <View style={styles.streakContainer}>
-          <FontAwesome name="fire" size={40} color="#FF6347" />
-          <Text style={styles.streakText}>{streakCount} Day Streak</Text>
-        </View>
+        
         {loading ? (
           <Text style={styles.loadingText}>Loading tasks...</Text>
         ) : (
           <>
-            {/* Bar Chart */}
-            <Text style={styles.chartTitle}>Task Summary (Bar Chart)</Text>
+            {/* Bar Chart 
+              <Text style={styles.chartTitle}>Task Summary (Bar Chart)</Text>
             <BarChart
               data={taskData}
               width={screenWidth - 80} // Adjust to fit your screen width
@@ -141,12 +141,16 @@ export default function Home() {
               yAxisLabel=""
               yAxisSuffix=" tasks"
             />
+            
+            */}
+            
 
             {/* Pie Chart */}
             <Text style={styles.chartTitle}>Task Breakdown (Pie Chart)</Text>
             <PieChart
               data={pieData}
-              width={screenWidth - 30}
+              style={styles.chartStyle}
+              width={screenWidth * 0.66} // Take up 2/3 of screen width (66%)
               height={220}
               chartConfig={chartConfig}
               accessor={'tasks'}
@@ -174,9 +178,23 @@ export default function Home() {
         )}
       </View>
 
-      <Button label="Get Organized" theme="primary" />
+      <Button label="Get Organized" theme="primary" onPress={() => 
+      {
+        messageRef.current.changeMessage('I am a Plant!');
+        messageRef.current.changeImageSource("../../assets/images/Plants/plant2_complete.png")
+        messageRef.current.show(); // Show the modal
+      }}/>
+      <PlantMessage ref={messageRef} initialText="Initial Message" />
       <StatusBar style="auto" />
     </ScrollView>
+
+    <View style={styles.streakContainer}>
+          <Plant streakAmount={streakCount}/>
+          <Text style={styles.dashboardTitle}>Streak</Text>
+          <Text style={styles.streakText}>{streakCount} Days</Text>
+          
+    </View>
+    </View>
   );
 }
 
@@ -198,13 +216,18 @@ const chartConfig = {
 };
 
 const styles = StyleSheet.create({
+  halfContainer:{
+    flex: 2,
+    backgroundColor: 'cornsilk',
+    flexDirection: 'row',
+  },
   container: {
     flex: 1,
     paddingVertical: 20,
     backgroundColor: 'cornsilk',
   },
   title: {
-    color: 'darkseagreen',
+    color: 'darkbrown',
     fontSize: 50,
     textAlign: 'center',
     marginBottom: 20,
@@ -212,7 +235,7 @@ const styles = StyleSheet.create({
   dashboard: {
     margin: 20,
     padding: 20,
-    backgroundColor: '#808080',
+    backgroundColor: 'white',
     borderRadius: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -223,20 +246,22 @@ const styles = StyleSheet.create({
   dashboardTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: 'darkseagreen',
+    color: 'darkbrown',
     marginBottom: 10,
     textAlign: 'center',
   },
   streakContainer: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
+    padding: 20,
+    paddingHorizontal: 20,
   },
   loadingText: {
     textAlign: 'center',
     fontSize: 16,
-    color: '#666',
+    color: 'red',
   },
   chartTitle: {
     fontSize: 18,
@@ -255,11 +280,11 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 16,
-    color: '#333',
+    color: 'darkbrown',
   },
   statValue: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: 'darkbrown',
   },
 });
