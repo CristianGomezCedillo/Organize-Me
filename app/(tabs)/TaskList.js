@@ -1,258 +1,226 @@
-import React, { useState, useEffect } from "react";
-import {
-  KeyboardAvoidingView,
-  StyleSheet,
-  Text,
-  View,
-  TextInput,
-  TouchableOpacity,
-  Keyboard,
-  ScrollView,
-  Platform,
-  FlatList,
-} from "react-native";
-import { CheckBox } from 'react-native-elements'; // Checkbox component
-import AsyncStorage from "@react-native-async-storage/async-storage"; // For storing tasks
+/*  TODO
 
-export default function ToDoPage() {
-  const [task, setTask] = useState("");
-  const [tag, setTag] = useState("");
-  const [taskItems, setTaskItems] = useState([]);
+ADD SEARCH function back -- done.
+add filters back -- done.
+take out the complete field when creating task -- done.
+create task button as a plus symbol -- done.
+put in ryans checkbox -- done and it now updates the database when clicked on to completed.
 
-  // Fetch tasks on app start
+remove delete button in favor of a slide to delete function.
+add user authentication -- oh boy.
+
+task generes (personal, fitness, study, etc)
+add icon to show task genre
+priorities to tasks (high priority, low priority)
+additional date that tells the app when to send a notification (potentially (still working on this idea))
+
+*/ //  TODO
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, FlatList, TouchableOpacity, StyleSheet, Text, TextInput } from 'react-native';
+import { supabase } from '../../components/supabaseClient';
+import Task from '../../components/Task';
+import EditTaskModal from '../../components/EditTaskModal';
+import CreateTaskModal from '../../components/CreateTaskModal';
+import { isAfter } from 'date-fns';
+
+const TaskList = () => {
+  const [tasks, setTasks] = useState([]);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [isEditModalVisible, setEditModalVisible] = useState(false);
+  const [isCreateModalVisible, setCreateModalVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+
+  // Fetch tasks from Supabase
+  const fetchTasks = async () => {
+    const { data, error } = await supabase.from('tasks_table').select('*');
+    if (error) {
+      console.error('Error fetching tasks:', error);
+    } else {
+      setTasks(data);
+    }
+  };
+
   useEffect(() => {
-    loadTasks();
+    fetchTasks();
   }, []);
 
-  // Save task list to storage
-  const saveTasks = async (tasks) => {
-    try {
-      await AsyncStorage.setItem("tasks", JSON.stringify(tasks));
-    } catch (error) {
-      console.error("Error saving tasks:", error);
-    }
+  // Handle task deletion
+  const handleDelete = (taskId) => {
+    setTasks(tasks.filter(task => task.id !== taskId));
   };
 
-  // Load tasks from storage
-  const loadTasks = async () => {
-    try {
-      const storedTasks = await AsyncStorage.getItem("tasks");
-      if (storedTasks !== null) {
-        setTaskItems(JSON.parse(storedTasks));
-      }
-    } catch (error) {
-      console.error("Error loading tasks:", error);
-    }
+  // Open edit modal with selected task
+  const handleEdit = (task) => {
+    setSelectedTask(task);
+    setEditModalVisible(true);
   };
 
-  // Add new task with tag
-  const handleAddTask = () => {
-    if (task) {
-      Keyboard.dismiss();
-      const newTask = { text: task, isCompleted: false, tag: tag || "General" }; // Add tag
-      const updatedTasks = [...taskItems, newTask];
-      setTaskItems(updatedTasks);
-      setTask(""); // Reset input
-      setTag(""); // Reset tag input
-      saveTasks(updatedTasks); // Save to AsyncStorage
-    }
+  // Open create task modal
+  const handleCreate = () => {
+    setCreateModalVisible(true);
   };
 
-  // Complete or uncheck task
-  const toggleTaskCompletion = (index) => {
-    let updatedTasks = [...taskItems];
-    updatedTasks[index].isCompleted = !updatedTasks[index].isCompleted;
-    setTaskItems(updatedTasks);
-    saveTasks(updatedTasks);
+  // Close create modal
+  const closeCreateModal = () => {
+    setCreateModalVisible(false);
   };
 
-  // Delete a task
-  const deleteTask = (index) => {
-    let updatedTasks = [...taskItems];
-    updatedTasks.splice(index, 1);
-    setTaskItems(updatedTasks);
-    saveTasks(updatedTasks);
+  // Render each task as an item
+  const renderTaskItem = ({ item }) => (
+    <Task
+      key={item.id}
+      taskId={item.id}
+      onEdit={handleEdit}
+      onDelete={handleDelete}
+    />
+  );
+
+  const filteredTasks = () => {
+    return tasks.filter((task) => {
+      const taskNameMatch = task.task_name.toLowerCase().includes(searchQuery.toLowerCase());
+      if (!taskNameMatch) return false;
+
+      const dueDate = new Date(task.due_date);
+      if (filterStatus === 'all') return true;
+      if (filterStatus === 'completed') return taskNameMatch && task.is_completed;
+      if (filterStatus === 'pending') return taskNameMatch && !task.is_completed && !isAfter(new Date(), new Date(task.due_date));
+      if (filterStatus === 'overdue') return taskNameMatch && !task.is_completed && isAfter(new Date(), new Date(task.due_date));
+
+      return false;
+    });
   };
 
   return (
     <View style={styles.container}>
-      <ScrollView keyboardShouldPersistTaps="handled">
-        {/* Task Heading */}
-        <View style={styles.tasksWrapper}>
-          <Text style={styles.sectionTitle}>My To-Do List</Text>
-
-          {/* Task List */}
-          {taskItems.length > 0 ? (
-            <FlatList
-              data={taskItems}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item, index }) => (
-                <View style={styles.taskItem}>
-                  <CheckBox
-                    checked={item.isCompleted}
-                    onPress={() => toggleTaskCompletion(index)}
-                    containerStyle={styles.checkbox}
-                  />
-                  <View style={styles.taskContent}>
-                    <Text style={item.isCompleted ? styles.taskTextCompleted : styles.taskText}>{item.text}</Text>
-                    <Text style={styles.tagText}>{item.tag}</Text>
-                  </View>
-                  <TouchableOpacity onPress={() => deleteTask(index)}>
-                    <Text style={styles.deleteText}>🗑️</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            />
-          ) : (
-            <Text style={styles.noTaskText}>No tasks added yet</Text>
-          )}
-        </View>
-      </ScrollView>
-
-      {/* Task Input */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.writeTaskWrapper}
-      >
-        <TextInput
-          style={styles.input}
-          placeholder={"Add a new task"}
-          value={task}
-          onChangeText={(text) => setTask(text)}
-        />
-        <TextInput
-          style={styles.tagInput}
-          placeholder={"Add a tag "}
-          value={tag}
-          onChangeText={(text) => setTag(text)}
-        />
-        <TouchableOpacity onPress={handleAddTask}>
-          <View style={styles.addWrapper}>
-            <Text style={styles.addText}>+</Text>
-          </View>
+      
+      {/* search bar */}
+      <TextInput
+            style={styles.searchInput}
+            placeholder="Search tasks..."
+            value={searchQuery}
+            onChangeText={(text) => setSearchQuery(text)}
+      />
+      {/* Filter Buttons */}
+      <View style={styles.filterContainer}>
+        <TouchableOpacity
+          style={[styles.filterButton, filterStatus === 'all' && styles.activeFilter]}
+          onPress={() => setFilterStatus('all')}
+        >
+          <Text>All</Text>
         </TouchableOpacity>
-      </KeyboardAvoidingView>
+        <TouchableOpacity
+          style={[styles.filterButton, filterStatus === 'pending' && styles.activeFilter]}
+          onPress={() => setFilterStatus('pending')}
+        >
+          <Text>Pending</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.filterButton, filterStatus === 'overdue' && styles.activeFilter]}
+          onPress={() => setFilterStatus('overdue')}
+        >
+          <Text>Overdue</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.filterButton, filterStatus === 'completed' && styles.activeFilter]}
+          onPress={() => setFilterStatus('completed')}
+        >
+          <Text>Completed</Text>
+        </TouchableOpacity>
+      </View>
+      <FlatList
+        data={filteredTasks()}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderTaskItem}
+        contentContainerStyle={styles.listContainer}
+      />
+
+      {/* Create Task Button */}
+      <TouchableOpacity style={styles.fabButton} onPress={handleCreate}>
+        <Text style={styles.fabText}>+</Text>
+      </TouchableOpacity>
+
+
+
+      {/* Render EditTaskModal */}
+      {isEditModalVisible && (
+        <EditTaskModal
+          task={selectedTask}
+          isVisible={isEditModalVisible}
+          onClose={() => setEditModalVisible(false)}
+          onUpdate={fetchTasks} // Refresh task list after updating
+        />
+      )}
+
+      {/* Render CreateTaskModal */}
+      {isCreateModalVisible && (
+        <CreateTaskModal
+          isVisible={isCreateModalVisible}
+          onClose={closeCreateModal}
+          onCreate={fetchTasks} // Refresh task list after creating
+        />
+      )}
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F4F4F4",
+    padding: 10,
   },
-  tasksWrapper: {
-    paddingTop: 80,
-    paddingHorizontal: 20,
+  searchInput: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    margin: 10,
+    fontSize: 16,
   },
-  sectionTitle: {
-    fontSize: 30,
-    fontWeight: "bold",
-    color: "#3E3E3E",
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  taskItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 10,
+  filterContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
     marginBottom: 10,
-    shadowColor: "#000",
+  },
+  filterButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: '#e5e5e5',
+  },
+  activeFilter: {
+    backgroundColor: '#007AFF',
+    color: '#ffffff',
+  },
+  createButtonContainer: {
+    marginVertical: 10,
+    padding: 10,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+  },
+  fabButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
-  checkbox: {
-    padding: 0,
-    margin: 0,
-  },
-  taskContent: {
-    flex: 1,
-    marginLeft: 10,
-  },
-  taskText: {
-    fontSize: 18,
-    color: "#333",
-  },
-  taskTextCompleted: {
-    fontSize: 18,
-    color: "#888",
-    textDecorationLine: "line-through",
-  },
-  tagText: {
-    fontSize: 14,
-    color: "#777",
-    marginTop: 5,
-  },
-  noTaskText: {
-    fontSize: 18,
-    color: "#888",
-    textAlign: "center",
-    marginTop: 50,
-  },
-  writeTaskWrapper: {
-    position: "absolute",
-    bottom: 30,
-    width: "100%",
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-  },
-  input: {
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 60,
-    borderColor: "#C0C0C0",
-    borderWidth: 1,
-    width: 200,
-    fontSize: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  tagInput: {
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 60,
-    borderColor: "#C0C0C0",
-    borderWidth: 1,
-    width: 150,
-    fontSize: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  addWrapper: {
-    width: 60,
-    height: 60,
-    backgroundColor: "#3E3E3E",
-    borderRadius: 50,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  addText: {
-    color: "#FFFFFF",
+  fabText: {
     fontSize: 24,
-    fontWeight: "bold",
-  },
-  deleteText: {
-    fontSize: 18,
-    color: "red",
-    marginLeft: 10,
+    color: '#ffffff',
+    fontWeight: 'bold',
   },
 });
+
+export default TaskList;
