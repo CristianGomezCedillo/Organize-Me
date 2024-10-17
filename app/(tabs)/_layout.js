@@ -2,24 +2,24 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../components/supabaseClient';
-import SignInScreen from './SignInScreen';
+import SignInScreen from '../../components/SignInScreen';
 
 export default function Layout() {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // New loading state
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkUserSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
-      setLoading(false); // Stop loading after checking the session
+      setLoading(false);
     };
 
     checkUserSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_, session) => {
       setUser(session?.user ?? null);
-      setLoading(false); // Stop loading when the auth state changes
+      setLoading(false);
     });
 
     return () => {
@@ -28,7 +28,7 @@ export default function Layout() {
   }, []);
 
   if (loading) {
-    return null; // Optionally, you can return a loading spinner or screen here
+    return null; // Optionally, return a loading spinner or screen here
   }
 
   return user ? (
