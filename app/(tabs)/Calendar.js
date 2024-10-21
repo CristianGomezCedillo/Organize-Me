@@ -2,14 +2,35 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { Agenda } from 'react-native-calendars';
 import { supabase } from '../../components/supabaseClient';
-import ToDoItem from '../../components/ToDoItem';
+import Task from '../../components/Task';
+import OrganizerAlgorithm from '../../components/OrganizerAlgorithm'
+import EditTaskModal from '../../components/EditTaskModal';
+import CreateTaskModal from '../../components/CreateTaskModal';
 
 export default function Home() {
   const [items, setItems] = useState({});
   const [loading, setLoading] = useState(true);
+  const [isEditModalVisible, setEditModalVisible] = useState(false);
+  const [isCreateModalVisible, setCreateModalVisible] = useState(false);
+  const [user, setUser] = useState(null);
 
   const getTodayDate = () => new Date().toISOString().split('T')[0];
   const today = getTodayDate();
+
+  const hoursPerDay = [3,3,3,3,3,5,5]; //Mon, Tues, Wed, Thu, Fri, Sat, Sun hours available for homework
+  // Fetch current user session
+  const fetchUser = async () => {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error('Error fetching user session:', error);
+    } else {
+      setUser(session?.user ?? null);
+    }
+  };
+
+  useEffect(() => {
+    fetchUser(); // Fetch the current user
+  }, []);
 
   // Fetch tasks from Supabase
   const fetchTasks = async () => {
@@ -18,12 +39,21 @@ export default function Home() {
       const { data, error } = await supabase
         .from('tasks_table')
         .select('*')
-        .order('due_date', { ascending: true });
+        .or(`user_id.eq.${user?.id},user_id.is.null`); // Show tasks for user and unassigned tasks
+        //.order('due_date', { ascending: true });
 
       if (error) throw error;
 
+      //Add a field called Priority that is calculated when the task is fetched
+      const tasksWithPriority = data.map(task => ({
+        ...task,
+        priority: OrganizerAlgorithm.GetPriority(task.due_date,0,task.time_to_take) // Add priority based on the function
+      }));
+      // Sort tasks by priority (higher priority first)
+      tasksWithPriority.sort((a, b) => b.priority - a.priority);
+
       // Transform tasks into the format expected by the calendar
-      const transformedTasks = transformTasksForCalendar(data);
+      const transformedTasks = distributeTasksByDay(tasksWithPriority, hoursPerDay);
       setItems(transformedTasks);
     } catch (error) {
       console.error("Error fetching tasks:", error);
@@ -31,34 +61,92 @@ export default function Home() {
       setLoading(false);
     }
   };
-
-  // Transform Supabase tasks into calendar format
-  const transformTasksForCalendar = (tasks) => {
+  const distributeTasksByDay = (tasks, maxTasksPerDay) => {
     const transformedItems = {};
-    
-    tasks.forEach(task => {
-      const date = task.due_date.split('T')[0]; // Extract YYYY-MM-DD
-      
-      if (!transformedItems[date]) {
-        transformedItems[date] = [];
+    //let day = new Date(today);
+    let day = today;
+    let hoursUsed = 0;
+
+    tasks.forEach((task, index) => {
+      if (!transformedItems[day]) {
+        transformedItems[day] = [];
       }
-      
-      transformedItems[date].push({
-        name: task.task_name,
-        date: date,
-        description: task.description || '',
-        complete: task.is_completed,
-        progress: task.is_completed ? 1 : 0,
-        progressPerClick: 0.25,
-        height: 50,
-        backgroundColor: getTaskColor(task),
-        priority: task.priority || 1,
-        id: task.id
-      });
+      if(isNaN(parseFloat(task.time_to_take))){task.time_to_take = 1;}
+      if (hoursUsed + parseFloat(task.time_to_take) < hoursPerDay[new Date(day).getDay()]) {
+      //if(transformedItems[day].length < 3){
+        transformedItems[day].push({
+          name: task.task_name,
+          date: task.due_date.split('T')[0],
+          description: task.description || '',
+          complete: task.is_completed,
+          progress: task.is_completed ? 1 : 0,
+          progressPerClick: 0.25,
+          height: 50,
+          backgroundColor: getTaskColor(task),
+          id: task.id,
+          priority: task.priority
+        });
+        if(!isNaN(parseFloat(task.time_to_take))){
+          hoursUsed += task.time_to_take;
+        }else{
+          hoursUsed += 1; //default of one hour if no task length is given
+        }
+
+      } else {
+        // Move to the next day if current day is full
+        day = getNextDay(day);
+        //hoursUsed = 0;
+        transformedItems[day] = [
+          {
+            name: task.task_name,
+            date: task.due_date.split('T')[0],
+            description: task.description || '',
+            complete: task.is_completed,
+            progress: task.is_completed ? 1 : 0,
+            progressPerClick: 0.25,
+            height: 50,
+            backgroundColor: getTaskColor(task),
+            id: task.id,
+            priority: task.priority
+          }
+        ];
+        if(!isNaN(parseFloat(task.time_to_take))){
+          hoursUsed += task.time_to_take;
+        }else{
+          hoursUsed += 1; //default of one hour if no task length is given
+        }
+      }
     });
-    
     return transformedItems;
   };
+
+  // Helper function to get the next day's date
+  const getNextDay = (dateString) => {
+    const date = new Date(dateString);
+    date.setDate(date.getDate() + 1);
+    return date.toISOString().split('T')[0];
+  };
+
+    // Handle task deletion
+    const handleDelete = (taskId) => {
+      setTasks(tasks.filter(task => task.id !== taskId));
+    };
+  
+    // Open edit modal with selected task
+    const handleEdit = (task) => {
+      setSelectedTask(task);
+      setEditModalVisible(true);
+    };
+  
+    // Open create task modal
+    const handleCreate = () => {
+      setCreateModalVisible(true);
+    };
+  
+    // Close create modal
+    const closeCreateModal = () => {
+      setCreateModalVisible(false);
+    };
 
   // Get color based on task status
   const getTaskColor = (task) => {
@@ -97,22 +185,20 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
+      <Text>{today} Hours Available for Work: {hoursPerDay[new Date(today).getDay()]}</Text>
       <Agenda
         items={items}
         selected={today}
         loadItemsForMonth={loadItems}
         renderItem={(item) => (
           <View style={styles.itemContainer}>
-            <ToDoItem
-              name={item.name}
-              date={item.date}
-              description={item.description}
-              complete={item.complete}
-              progress={item.progress}
-              progressPerClick={item.progressPerClick}
-              backgroundColor={item.backgroundColor}
-              priority={item.priority}
+            <Task
+              key={item.id}
+              taskId={item.id}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
             />
+            <Text>Priority {item.priority}</Text>
           </View>
         )}
         renderEmptyDate={renderEmptyDate}
@@ -126,6 +212,25 @@ export default function Home() {
           agendaKnobColor: '#007AFF'
         }}
       />
+
+      {/* Render EditTaskModal */}
+      {isEditModalVisible && (
+        <EditTaskModal
+          task={selectedTask}
+          isVisible={isEditModalVisible}
+          onClose={() => setEditModalVisible(false)}
+          onUpdate={fetchTasks} // Refresh task list after updating
+        />
+      )}
+
+      {/* Render CreateTaskModal */}
+      {isCreateModalVisible && (
+        <CreateTaskModal
+          isVisible={isCreateModalVisible}
+          onClose={closeCreateModal}
+          onCreate={fetchTasks} // Refresh task list after creating
+        />
+      )}
     </View>
   );
 }
