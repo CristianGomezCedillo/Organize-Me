@@ -34,8 +34,8 @@ export default function Layout() {
   return user ? (
     <Tabs
       screenOptions={({ route }) => ({
-        tabBarActiveTintColor: '#ADD8E6',
-        tabBarInactiveTintColor: 'yellow',
+        tabBarActiveTintColor: '#8B4513',
+        tabBarInactiveTintColor: '#F5F5DC',
         tabBarIcon: ({ color, size }) => {
           let iconName;
 
@@ -51,14 +51,14 @@ export default function Layout() {
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarStyle: {
-          backgroundColor: '#228B22', // Tab bar background color
+          backgroundColor: '#2E8B57', // Tab bar background color
           height: 60, // Adjust the height of the tab bar
         },
         headerStyle: {
-          backgroundColor: '#228B22', // Header background color
+          backgroundColor: '#2E8B57', // Header background color
         },
         headerTitleStyle: {
-          color: 'yellow', // Color for the header title
+          color: '#F5F5DC', // Color for the header title
           fontSize: 20, // Font size for the header title
         },
       })}
@@ -68,6 +68,7 @@ export default function Layout() {
         options={{
           tabBarLabel: 'Dashboard',
           headerTitle: 'Dashboard',
+          fontWeight: 'Bold',
         }}
       />
       <Tabs.Screen
