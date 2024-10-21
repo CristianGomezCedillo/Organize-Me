@@ -1,9 +1,37 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-
+import { useEffect, useState } from 'react';
+import { supabase } from '../../components/supabaseClient';
+import SignInScreen from '../../components/SignInScreen';
 
 export default function Layout() {
-  return (
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkUserSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+      setLoading(false);
+    };
+
+    checkUserSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
+  if (loading) {
+    return null; // Optionally, return a loading spinner or screen here
+  }
+
+  return user ? (
     <Tabs
       screenOptions={({ route }) => ({
         tabBarActiveTintColor: '#ADD8E6',
@@ -18,8 +46,6 @@ export default function Layout() {
             iconName = 'calendar';
           } else if (route.name === 'TaskList') {
             iconName = 'list';
-          } else if (route.name === 'TaskList2') { // New TaskList2 Icon
-            iconName = 'checkbox-outline';
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -41,30 +67,25 @@ export default function Layout() {
         name="index"
         options={{
           tabBarLabel: 'Dashboard',
-          headerTitle: 'Dashboard', // Set title to display on the header
+          headerTitle: 'Dashboard',
         }}
       />
       <Tabs.Screen
         name="TaskList"
         options={{
           tabBarLabel: 'All Tasks',
-          headerTitle: 'All Tasks', // Set title to display on the header
-        }}
-      />
-      <Tabs.Screen
-        name="TaskList2"
-        options={{
-          tabBarLabel: 'Task List 2',
-          headerTitle: 'Task List 2', // Set title to display on the header
+          headerTitle: 'All Tasks',
         }}
       />
       <Tabs.Screen
         name="Calendar"
         options={{
           tabBarLabel: 'Calendar',
-          headerTitle: 'Calendar', // Set title to display on the header
+          headerTitle: 'Calendar',
         }}
       />
     </Tabs>
+  ) : (
+    <SignInScreen />
   );
 }
