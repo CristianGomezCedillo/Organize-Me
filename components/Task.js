@@ -123,7 +123,7 @@ const Task = ({ taskId, onDelete }) => {
       style={[styles.taskContainer, task.is_completed && styles.completedTask]}
       onPress={() => setEditModalVisible(true)}
     >
-      <View style={styles.taskContainer}>
+      
         <View style={styles.taskHeader}>
           <TouchableOpacity onPress={handleProgressClick} style={styles.progressContainer}>
             <CircularProgress progress={progressTime} size={40} />
@@ -155,7 +155,7 @@ const Task = ({ taskId, onDelete }) => {
           onClose={() => setEditModalVisible(false)}
           onSave={handleUpdate}
         />
-      </View>
+      
     </TouchableOpacity>
   );
 };
