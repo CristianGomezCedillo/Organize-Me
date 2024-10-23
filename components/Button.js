@@ -4,13 +4,13 @@ import { StyleSheet, View, Pressable, Text } from 'react-native';
 export default function Button({ label, theme, onPress }) {
   if (theme === "primary") {
     return (
-      <View style={[styles.buttonContainer, { borderWidth: 3, borderColor: "yellow", borderRadius: 18 }]}>
+      <View style={[styles.buttonContainer, { borderWidth: 3, borderColor: "#8B4513", borderRadius: 18 }]}>
         <Pressable
-          style={[styles.button, { backgroundColor: "green" }]}
+          style={[styles.button, { backgroundColor: "#2E8B57" }]}
           onPress={onPress}
         >
 
-          <Text style={[styles.buttonLabel, { color: "yellow" }]}>{label}</Text>
+          <Text style={[styles.buttonLabel, { color: "#F5F5DC" }]}>{label}</Text>
         </Pressable>
       </View>
     );

@@ -7,6 +7,7 @@
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
     "entryPoint": "./node_modules/expo-router/entry",
+    "homepage": "https://latinkiri11.github.io/Organize-Me",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -22,7 +23,7 @@
       }
     },
     "web": {
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/organizeme.png"
     },
     "plugins": [
       "expo-router",
@@ -38,7 +39,7 @@
       "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0eG5kbHB5YXJocmdlZ2dwaWx5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjc3Mzg1MzcsImV4cCI6MjA0MzMxNDUzN30.m50-GZpEKEgAuW4Q3oEHFbJxCQ-QbdWdBayNTpcsZLE"
     },
     "experiments": {
-      "baseUrl": "/Organize-Me"
+      "baseUrl": "/expo-gh-pages"
     }
   }
 }

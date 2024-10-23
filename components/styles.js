@@ -1,0 +1,71 @@
+import { StyleSheet } from 'react-native';
+
+export const commonStyles = StyleSheet.create({
+    taskContainer: {
+        backgroundColor: '#ffffff',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+      },
+    input: {
+        width: '100%',
+        borderWidth: 1,
+        borderColor: '#E5E5EA',
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 16,
+        fontSize: 16,
+    },
+    submitButton: {
+        flex: 1,
+        padding: 12,
+        borderRadius: 8,
+        backgroundColor: '#007AFF',
+        marginLeft: 8,
+      },
+      modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+      },
+      modalView: {
+        width: '90%',
+        backgroundColor: '#ffffff',
+        borderRadius: 20,
+        padding: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+      },
+      modalTitle: {
+        fontSize: 24,
+        fontWeight: '600',
+        marginBottom: 20,
+        textAlign: 'center',
+      },
+      submitButton: {
+        flex: 1,
+        padding: 12,
+        borderRadius: 8,
+        backgroundColor: '#007AFF',
+        marginLeft: 8,
+      },
+      buttonText: {
+        color: '#ffffff',
+        textAlign: 'center',
+        fontSize: 16,
+        fontWeight: '600',
+      },
+      modalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+      },
+});

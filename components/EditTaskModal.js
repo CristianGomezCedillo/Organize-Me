@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { commonStyles } from './styles';
 
 const EditTaskModal = ({ visible, task, onClose, onSave }) => {
   const [taskName, setTaskName] = useState(task.task_name);
@@ -28,22 +29,22 @@ const EditTaskModal = ({ visible, task, onClose, onSave }) => {
     transparent={true}
     visible={visible}
   >
-    <View style={styles.modalOverlay}>
-      <View style={styles.modalView}>
-        <Text style={styles.modalTitle}>Edit Task</Text>
+    <View style={commonStyles.modalOverlay}>
+      <View style={commonStyles.modalView}>
+        <Text style={commonStyles.modalTitle}>Edit Task</Text>
 
         <TextInput
           placeholder="Task Name"
           value={taskName}
           onChangeText={setTaskName}
-          style={styles.input}
+          style={commonStyles.input}
         />
 
         <TextInput
           placeholder="Description (optional)"
           value={description}
           onChangeText={setDescription}
-          style={[styles.input, styles.textArea]}
+          style={[commonStyles.input, styles.textArea]}
           multiline
           numberOfLines={3}
         />
@@ -52,21 +53,21 @@ const EditTaskModal = ({ visible, task, onClose, onSave }) => {
           placeholder="Time to Take (optional)"
           value={timeToTake}
           onChangeText={setTimeToTake}
-          style={styles.input}
+          style={commonStyles.input}
         />
 
         <TextInput
           placeholder="Due Date (YYYY-MM-DD)"
           value={dueDate}
           onChangeText={setDueDate}
-          style={styles.input}
+          style={commonStyles.input}
         />
 
         <TextInput
           placeholder="Repeat every X days (optional)"
           value={repeating}
           onChangeText={setRepeating}
-          style={styles.input}
+          style={commonStyles.input}
           keyboardType="numeric"
         />
 
@@ -79,12 +80,12 @@ const EditTaskModal = ({ visible, task, onClose, onSave }) => {
           </Text>
         </TouchableOpacity>
 
-        <View style={styles.modalButtons}>
+        <View style={commonStyles.modalButtons}>
           <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
-            <Text style={styles.buttonText}>Cancel</Text>
+            <Text style={commonStyles.buttonText}>Cancel</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.submitButton} onPress={handleSave}>
-            <Text style={styles.buttonText}>Update</Text>
+          <TouchableOpacity style={commonStyles.submitButton} onPress={handleSave}>
+            <Text style={commonStyles.buttonText}>Update</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -94,29 +95,7 @@ const EditTaskModal = ({ visible, task, onClose, onSave }) => {
 };
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalView: {
-    width: '90%',
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
+  
   input: {
     width: '100%',
     borderWidth: 1,
@@ -142,10 +121,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#000000',
   },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
   cancelButton: {
     flex: 1,
     padding: 12,
@@ -153,19 +128,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF3B30',
     marginRight: 8,
   },
-  submitButton: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: '#007AFF',
-    marginLeft: 8,
-  },
-  buttonText: {
-    color: '#ffffff',
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  
 });
 
 export default EditTaskModal;
