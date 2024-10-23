@@ -1,29 +1,111 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Modal, TextInput } from 'react-native';
 import { Agenda } from 'react-native-calendars';
 import { supabase } from '../../components/supabaseClient';
-import ToDoItem from '../../components/ToDoItem';
+import Task from '../../components/Task';
+import OrganizerAlgorithm from '../../components/OrganizerAlgorithm'
+import EditTaskModal from '../../components/EditTaskModal';
+import CreateTaskModal from '../../components/CreateTaskModal';
+import { MaterialIcons } from '@expo/vector-icons';
+import { commonStyles } from '../../components/styles';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getTime } from 'date-fns';
 
 export default function Home() {
   const [items, setItems] = useState({});
   const [loading, setLoading] = useState(true);
-
+  const [isEditModalVisible, setEditModalVisible] = useState(false);
+  const [isCreateModalVisible, setCreateModalVisible] = useState(false);
+  const [user, setUser] = useState(null);
+  const [tempHours, setTempHours] = useState([3,3,3,3,3,3,3]);
+  const [isSettingsModalVisible, setSettingsModalVisible] = useState(false);
+  const [hoursPerDay, setHoursPerDay] = useState([]); //Mon, Tues, Wed, Thu, Fri, Sat, Sun hours available for homework
+  const daysOfWeek = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   const getTodayDate = () => new Date().toISOString().split('T')[0];
   const today = getTodayDate();
 
+   // Function to load hours from AsyncStorage
+   const loadHours = async () => {
+    try {
+      const storedHours = await AsyncStorage.getItem('HoursPerDay');
+      
+      if (storedHours !== null) {
+        setHoursPerDay(JSON.parse(storedHours));
+        setTempHours(JSON.parse(storedHours))
+      } else {
+        // If there's no stored value, initialize it with default values
+        setHoursPerDay([3, 3, 3, 3, 3, 3, 3]);
+        setTempHours([3, 3, 3, 3, 3, 3, 3]);
+        await AsyncStorage.setItem('HoursPerDay', JSON.stringify(defaultHours));
+      }
+
+    } catch (error) {
+      console.error('Failed to load hours:', error);
+    }
+    
+  };
+
+  // Function to save hours to AsyncStorage
+  const saveHours = async () => {
+    try {
+      await AsyncStorage.setItem('HoursPerDay', JSON.stringify(tempHours));
+      console.log('Updated settings' + JSON.stringify(tempHours));
+    } catch (error) {
+      console.error('Failed to save hours:', error);
+    }
+  };
+  
+  // Fetch current user session
+  const fetchUser = async () => {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error('Error fetching user session:', error);
+    } else {
+      setUser(session?.user ?? null);
+    }
+  };
+
+  useEffect(() => {
+    fetchUser(); // Fetch the current user
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      loadHours(); //this also calls fetchTasks
+    }
+  }, [user]);
+
+  useEffect(() => {
+    console.log("Updated hours: ", hoursPerDay);
+    fetchTasks();
+  }, [hoursPerDay])
+
   // Fetch tasks from Supabase
   const fetchTasks = async () => {
+    if (!user) {
+      console.log("User not loaded yet.");
+      return; // Avoid querying if the user is not loaded yet
+    }
     try {
       setLoading(true);
       const { data, error } = await supabase
         .from('tasks_table')
         .select('*')
-        .order('due_date', { ascending: true });
+        .or(`user_id.eq.${user?.id},user_id.is.null`); // Show tasks for user and unassigned tasks
+        //.order('due_date', { ascending: true });
 
       if (error) throw error;
 
+      //Add a field called Priority that is calculated when the task is fetched
+      const tasksWithPriority = data.map(task => ({
+        ...task,
+        priority: OrganizerAlgorithm.GetPriority(task.due_date,0,task.time_to_take) // Add priority based on the function
+      }));
+      // Sort tasks by priority (higher priority first)
+      tasksWithPriority.sort((a, b) => b.priority - a.priority);
+
       // Transform tasks into the format expected by the calendar
-      const transformedTasks = transformTasksForCalendar(data);
+      const transformedTasks = distributeTasksByDay(tasksWithPriority, hoursPerDay);
       setItems(transformedTasks);
     } catch (error) {
       console.error("Error fetching tasks:", error);
@@ -31,34 +113,91 @@ export default function Home() {
       setLoading(false);
     }
   };
-
-  // Transform Supabase tasks into calendar format
-  const transformTasksForCalendar = (tasks) => {
+  const getTimeToTake = (task) =>{
+    const f = parseFloat(task.time_to_take);
+    if(f==0){return 0.5;}
+    if(isNaN(f)){return 1;}
+    return f; 
+  }
+  const distributeTasksByDay = (tasks, maxTasksPerDay) => {
     const transformedItems = {};
-    
-    tasks.forEach(task => {
-      const date = task.due_date.split('T')[0]; // Extract YYYY-MM-DD
-      
-      if (!transformedItems[date]) {
-        transformedItems[date] = [];
+    let day = today;
+    let hoursUsed = 0;
+    let hoursPerToday = 0;
+    tasks.forEach((task, index) => {
+      if (!transformedItems[day]) {
+        transformedItems[day] = [];
       }
-      
-      transformedItems[date].push({
-        name: task.task_name,
-        date: date,
-        description: task.description || '',
-        complete: task.is_completed,
-        progress: task.is_completed ? 1 : 0,
-        progressPerClick: 0.25,
-        height: 50,
-        backgroundColor: getTaskColor(task),
-        priority: task.priority || 1,
-        id: task.id
-      });
+      hoursPerDay[new Date(day).getDay()];
+      hoursPerToday = hoursPerDay[new Date(day).getDay()];
+      //console.log("day "+new Date(day).getDay()+" hours used: "+hoursUsed+" total available: "+hoursPerToday);
+      if (hoursUsed + getTimeToTake(task) <= hoursPerToday) {
+        transformedItems[day].push({
+          name: task.task_name,
+          date: task.due_date.split('T')[0],
+          description: task.description || '',
+          complete: task.is_completed,
+          progress: task.is_completed ? 1 : 0,
+          progressPerClick: 0.25,
+          height: 50,
+          backgroundColor: getTaskColor(task),
+          id: task.id,
+          priority: task.priority
+        });
+        hoursUsed += getTimeToTake(task);
+      } else {
+        // Move to the next day if current day is full
+        day = getNextDay(day);
+        // Reset hours for the new day
+        hoursPerToday = hoursPerDay[new Date(day).getDay()]; // Update hours for the new day
+         hoursUsed = getTimeToTake(task); // Reset hoursUsed to the time for the current task
+        transformedItems[day] = [
+          {
+            name: task.task_name,
+            date: task.due_date.split('T')[0],
+            description: task.description || '',
+            complete: task.is_completed,
+            progress: task.is_completed ? 1 : 0,
+            progressPerClick: 0.25,
+            height: 50,
+            backgroundColor: getTaskColor(task),
+            id: task.id,
+            priority: task.priority
+          }
+        ];
+        hoursUsed = getTimeToTake(task);
+      }
     });
-    
     return transformedItems;
   };
+
+  // Helper function to get the next day's date
+  const getNextDay = (dateString) => {
+    const date = new Date(dateString);
+    date.setDate(date.getDate() + 1);
+    return date.toISOString().split('T')[0];
+  };
+
+    // Handle task deletion
+    const handleDelete = (taskId) => {
+      setTasks(tasks.filter(task => task.id !== taskId));
+    };
+  
+    // Open edit modal with selected task
+    const handleEdit = (task) => {
+      setSelectedTask(task);
+      setEditModalVisible(true);
+    };
+  
+    // Open create task modal
+    const handleCreate = () => {
+      setCreateModalVisible(true);
+    };
+  
+    // Close create modal
+    const closeCreateModal = () => {
+      setCreateModalVisible(false);
+    };
 
   // Get color based on task status
   const getTaskColor = (task) => {
@@ -70,9 +209,7 @@ export default function Home() {
     return '#007AFF'; // Blue for pending
   };
 
-  useEffect(() => {
-    fetchTasks();
-  }, []);
+  
 
   const loadItems = (day) => {
     // This function is called when scrolling through months
@@ -95,24 +232,68 @@ export default function Home() {
     );
   }
 
+  const tempHoursChange = (value, index) => {
+    const updatedHours = [...tempHours];
+    updatedHours[index] = value ? parseInt(value, 10) : 1; // Convert value to int or set to 0
+    setTempHours(updatedHours);
+  }
+
+  const handleHoursChange = () => {
+    setHoursPerDay(tempHours);
+    saveHours();
+  };
+
   return (
     <View style={styles.container}>
+      <TouchableOpacity style={commonStyles.settingsButton} onPress={() => setSettingsModalVisible(true)}>
+        <MaterialIcons name="settings" size={24} color="gray" />
+      </TouchableOpacity>
+      <Text>{today} Hours Available for Work: {hoursPerDay[new Date(today).getDay()]}</Text>
+
+      {/*Settings popup*/}
+      <Modal animationType="slide" transparent={true} visible={isSettingsModalVisible}>
+        <View style={commonStyles.modalOverlay}>
+          <View style={commonStyles.modalView}>
+            <Text style={commonStyles.modalTitle}>Hours Available Per Day</Text>
+            {hoursPerDay.map((hours, index) => (
+              <View key={index} style={styles.inputRow}>
+                <Text style={styles.label}>{daysOfWeek[index]}: </Text>
+                <TextInput
+                  style={commonStyles.input}
+                  keyboardType="numeric" // Ensures numeric input
+                  value={tempHours[index].toString()}
+                  onChangeText={(value) => tempHoursChange(value, index)} // Updates corresponding index
+                  placeholder="Enter hours"
+                />
+              </View>
+            ))}
+          </View>
+          <View style={commonStyles.modalButtons}>
+            <TouchableOpacity style={commonStyles.submitButton} onPress={() => {
+              setSettingsModalVisible(false); 
+              handleHoursChange();
+              }}>
+              <Text style={commonStyles.buttonText}>Update</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+
+      {/*Agenda component*/}
       <Agenda
         items={items}
         selected={today}
         loadItemsForMonth={loadItems}
         renderItem={(item) => (
           <View style={styles.itemContainer}>
-            <ToDoItem
-              name={item.name}
-              date={item.date}
-              description={item.description}
-              complete={item.complete}
-              progress={item.progress}
-              progressPerClick={item.progressPerClick}
-              backgroundColor={item.backgroundColor}
-              priority={item.priority}
+            <Task
+              key={item.id}
+              taskId={item.id}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
             />
+            <Text>Priority {item.priority}</Text>
           </View>
         )}
         renderEmptyDate={renderEmptyDate}
@@ -126,6 +307,25 @@ export default function Home() {
           agendaKnobColor: '#007AFF'
         }}
       />
+
+      {/* Render EditTaskModal */}
+      {isEditModalVisible && (
+        <EditTaskModal
+          task={selectedTask}
+          isVisible={isEditModalVisible}
+          onClose={() => setEditModalVisible(false)}
+          onUpdate={fetchTasks} // Refresh task list after updating
+        />
+      )}
+
+      {/* Render CreateTaskModal */}
+      {isCreateModalVisible && (
+        <CreateTaskModal
+          isVisible={isCreateModalVisible}
+          onClose={closeCreateModal}
+          onCreate={fetchTasks} // Refresh task list after creating
+        />
+      )}
     </View>
   );
 }
@@ -149,6 +349,15 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 30,
     paddingHorizontal: 20,
+  },
+  settingsButton: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: '#007AFF', // Button background color
+    padding: 10,               // Padding around the icon
+    borderRadius: 25,           // Rounded button
+    justifyContent: 'center',   // Center icon within button
+    alignItems: 'center',       // Align icon in the center
   },
 });
 
