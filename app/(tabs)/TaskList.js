@@ -6,22 +6,23 @@ take out the complete field when creating task -- done.
 create task button as a plus symbol -- done.
 put in ryans checkbox -- done and it now updates the database when clicked on to completed.
 
-remove delete button in favor of a slide to delete function.
+remove delete button in favor of a slide to delete function. --done
 add user authentication -- oh boy.
 
 task generes (personal, fitness, study, etc)
 add icon to show task genre
-priorities to tasks (high priority, low priority)
+priorities to tasks (high priority, low priority) --done
 additional date that tells the app when to send a notification (potentially (still working on this idea))
 
 */ //  TODO
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef} from 'react';
 import { View, FlatList, TouchableOpacity, StyleSheet, Text, TextInput } from 'react-native';
 import { supabase } from '../../components/supabaseClient';
 import Task from '../../components/Task';
 import EditTaskModal from '../../components/EditTaskModal';
 import CreateTaskModal from '../../components/CreateTaskModal';
 import { isAfter } from 'date-fns';
+import PlantMessage from "../../components/PlantMessage";
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([]);
@@ -31,6 +32,7 @@ const TaskList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [user, setUser] = useState(null);
+  const messageRef = useRef(null); //for the plantmessage
 
   // Fetch current user session
   const fetchUser = async () => {
@@ -68,6 +70,10 @@ const TaskList = () => {
 
   // Handle task deletion
   const handleDelete = (taskId) => {
+    //Show the plantMessage
+    messageRef.current.changeMessage('Task deleted successfully!');
+    messageRef.current.changeImageSource("../../assets/images/Plants/plant2_complete.png")
+    messageRef.current.show(); // Show the modal
     setTasks(tasks.filter(task => task.id !== taskId));
   };
 
@@ -155,6 +161,8 @@ const TaskList = () => {
         renderItem={renderTaskItem}
         contentContainerStyle={styles.listContainer}
       />
+
+      <PlantMessage ref={messageRef} initialText="Initial Message" />
 
       {/* Create Task Button */}
       <TouchableOpacity style={styles.fabButton} onPress={handleCreate}>
