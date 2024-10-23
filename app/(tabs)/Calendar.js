@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Modal, TextInput } from 'react-native';
 import { Agenda } from 'react-native-calendars';
 import { supabase } from '../../components/supabaseClient';
@@ -9,7 +9,7 @@ import CreateTaskModal from '../../components/CreateTaskModal';
 import { MaterialIcons } from '@expo/vector-icons';
 import { commonStyles } from '../../components/styles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getTime } from 'date-fns';
+import PlantMessage from "../../components/PlantMessage";
 
 export default function Home() {
   const [items, setItems] = useState({});
@@ -20,6 +20,7 @@ export default function Home() {
   const [tempHours, setTempHours] = useState([3,3,3,3,3,3,3]);
   const [isSettingsModalVisible, setSettingsModalVisible] = useState(false);
   const [hoursPerDay, setHoursPerDay] = useState([]); //Mon, Tues, Wed, Thu, Fri, Sat, Sun hours available for homework
+  const messageRef = useRef(null); //for the plantmessage
   const daysOfWeek = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   const getTodayDate = () => new Date().toISOString().split('T')[0];
   const today = getTodayDate();
@@ -245,6 +246,7 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
+      <PlantMessage ref={messageRef} initialText="Initial Message" />
       <TouchableOpacity style={commonStyles.settingsButton} onPress={() => setSettingsModalVisible(true)}>
         <MaterialIcons name="settings" size={24} color="gray" />
       </TouchableOpacity>
