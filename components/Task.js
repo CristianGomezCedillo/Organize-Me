@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, Animated, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { supabase } from './supabaseClient';
 import EditTaskModal from './EditTaskModal';
 import { isAfter } from 'date-fns';
 import { Circle } from 'react-native-progress';
+import { LongPressGestureHandler, PanGestureHandler, State, TapGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Ionicons } from '@expo/vector-icons';
 
 
 const Task = ({ taskId, onDelete }) => {
   const [task, setTask] = useState(null);
   const [progressTime, setProgressTime] = useState(0);
   const [isEditModalVisible, setEditModalVisible] = useState(false);
+  const [translateX] = useState(new Animated.Value(0));
 
   const fetchTask = async () => {
     try {
@@ -94,9 +97,16 @@ const Task = ({ taskId, onDelete }) => {
   const dueDate = new Date(task.due_date);
   const isOverdue = isAfter(new Date(), dueDate);
 
-  const handleProgressClick = async () => {
+  const handleProgressClick = async (fullComplete) => {
     let newProgress = Math.min(progressTime + 0.25, 1); // Increment by 25%, max at 100%
-    setProgressTime(newProgress); // Update the progress state
+    if(progressTime >= 1){
+      setProgressTime(0); //unclick
+    }
+    if(fullComplete){
+      setProgressTime(1);
+    }else{
+      setProgressTime(newProgress); // Update the progress state
+    }
 
     // When progress reaches 100%, mark task as completed
     if (newProgress == 1) {
@@ -118,49 +128,87 @@ const Task = ({ taskId, onDelete }) => {
     }
   };
 
-  return (
-    <TouchableOpacity
-      style={[styles.taskContainer, task.is_completed && styles.completedTask]}
-      onPress={() => setEditModalVisible(true)}
-    >
-      
-        <View style={styles.taskHeader}>
-          <TouchableOpacity onPress={handleProgressClick} style={styles.progressContainer}>
-            <CircularProgress progress={progressTime} size={40} />
-          </TouchableOpacity>
-          <Text style={styles.taskName}>{task.task_name}</Text>
-          <View style={[styles.statusBadge, task.is_completed ? styles.completedBadge : (isOverdue ? styles.overdueBadge : styles.pendingBadge)]}>
-            <Text style={styles.statusText}>
-              {task.is_completed ? 'Completed' : (isOverdue ? 'Overdue' : 'Pending')}
-            </Text>
-          </View>
-        </View>
-        <Text style={styles.description}>{task.description}</Text>
-        <View style={styles.taskDetails}>
-          <Text style={styles.detailText}>📅 Due: {new Date(task.due_date).toLocaleDateString()}</Text>
-          <Text style={styles.detailText}>⏱️ Time: {task.time_to_take}</Text>
-          <Text style={styles.detailText}>🔄 Repeats: Every {task.repeating} days</Text>
-        </View>
-
-        {/* Container for the delete button */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-            <Text style={styles.deleteButtonText}>Delete</Text>
-          </TouchableOpacity>
-        </View>
-
-        <EditTaskModal
-          visible={isEditModalVisible}
-          task={task}
-          onClose={() => setEditModalVisible(false)}
-          onSave={handleUpdate}
-        />
-      
-    </TouchableOpacity>
+  //Code for swiping to delete
+  const deleteThreshold = 150;
+  const onGestureEvent = Animated.event(
+    [{ nativeEvent: { translationX: translateX } }],
+    { useNativeDriver: true }
   );
+
+  // Handle state change to detect when gesture is released
+  const onHandlerStateChange = (event) => {
+    if (event.nativeEvent.state === State.END) {
+      // If dragged past threshold, animate task offscreen and delete
+      if (Math.abs(event.nativeEvent.translationX) > deleteThreshold) {
+        Animated.timing(translateX, {
+          toValue: 3000, // Move offscreen
+          duration: 1000,
+          useNativeDriver: true,
+        }).start(() => {
+          // Call delete function once the animation is done
+          handleDelete();
+        });
+      } else {
+        // Reset position if not past the threshold
+        Animated.spring(translateX, {
+          toValue: 0,
+          useNativeDriver: true,
+        }).start();
+      }
+    }
+  };
+
+  return (
+    <GestureHandlerRootView>
+      <PanGestureHandler
+        onGestureEvent={onGestureEvent}
+        onHandlerStateChange={onHandlerStateChange}
+      >
+        <Animated.View style={[styles.taskContainer, { transform: [{ translateX }] }]}>
+          {/* Wrap all components that should be long-pressable in a single View */}
+          <LongPressGestureHandler onActivated={() => setEditModalVisible(true)}>
+            <View>
+            <View style={styles.taskHeader}>
+              <TapGestureHandler onActivated={() => handleProgressClick(false)}>
+                <View style={styles.progressContainer}>
+                  {/* Show the right icon based on progress */}
+                  {progressTime === 1 ? (
+                    <Ionicons name="checkmark-circle-sharp" size={40} color="green" />
+                  ) : progressTime === 0 ? (
+                    <Ionicons name="square-outline" size={40} color="black" />
+                  ) : (
+                    <CircularProgress progress={progressTime} size={40} />
+                  )}
+                </View>
+              </TapGestureHandler>
+              <Text style={styles.taskName}>{task.task_name}</Text>
+              <View style={[styles.statusBadge, task.is_completed ? styles.completedBadge : (isOverdue ? styles.overdueBadge : styles.pendingBadge)]}>
+                <Text style={styles.statusText}>
+                  {task.is_completed ? 'Completed' : (isOverdue ? 'Overdue' : 'Pending')}
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.description}>{task.description}</Text>
+            <View style={styles.taskDetails}>
+              <Text style={styles.detailText}>📅 Due: {new Date(task.due_date).toLocaleDateString()}</Text>
+              <Text style={styles.detailText}>⏱️ Time: {task.time_to_take}</Text>
+              <Text style={styles.detailText}>🔄 Repeats: Every {task.repeating} days</Text>
+            </View>
+            <EditTaskModal
+              visible={isEditModalVisible}
+              task={task}
+              onClose={() => setEditModalVisible(false)}
+              onSave={handleUpdate}
+            />
+            </View>
+          </LongPressGestureHandler>
+        </Animated.View>
+      </PanGestureHandler>
+    </GestureHandlerRootView>
+);
 };
 
-// CircularProgress function
+//A circular progress bar that shows up when the task has multiple sittings
 const CircularProgress = ({ progress, size = 100, color = 'lightblue' }) => {
   return (
     <View style={styles.wheel}>
@@ -179,6 +227,7 @@ const CircularProgress = ({ progress, size = 100, color = 'lightblue' }) => {
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   taskContainer: {

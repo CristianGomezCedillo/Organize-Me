@@ -37,6 +37,18 @@ Fetch changes from Cristian's repo and then push changes
 `git checkout main`
 Optional: Add your own branch
 
+We Now Have A GitHub WebPage with our app(Still in Alpha -- testing phase):
+Here is the website link: https://latinkiri11.github.io/Organize-Me/
+
+Note: If you run into an issue and you want to deploy make sure you run these to commands first:
+
+`npm install --save-dev gh-pages`
+
+`npm install`
+
+Afterwords in order to deploy changes to the webpage run this command:
+
+`npm run deploy`
 
 QUESTIONS! 
 
