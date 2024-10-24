@@ -57,40 +57,42 @@ const Task = ({ taskId, onDelete }) => {
   };
 
   const handleDelete = async () => {
-    Alert.alert(
-      'Delete Task',
-      'Are you sure you want to delete this task?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'OK',
-          onPress: async () => {
-            try {
-              const { error } = await supabase
-                .from('tasks_table')
-                .delete()
-                .eq('id', task.id);
-
-              if (error) {
-                console.error('Error deleting task:', error);
-                Alert.alert('Error deleting task:', error.message);
-              } else {
-                Alert.alert('Task deleted successfully');
-                onDelete(task.id);
-              }
-            } catch (err) {
-              console.error('Error:', err);
-            }
-          },
-        },
-      ],
-      { cancelable: false }
-    );
+    try {
+      const { data: userData, error: userError } = await supabase.auth.getSession();
+  
+      if (userError || !userData?.session?.user) {
+        console.error('User session error:', userError);
+        Alert.alert('You must be logged in to delete tasks.');
+        return;
+      }
+  
+      const user = userData.session.user;
+      console.log('User ID:', user.id); // Log the user ID to ensure it's correct
+  
+      try {
+        const { data, error } = await supabase
+          .from('tasks_table')
+          .delete()
+          .eq('id', task.id)
+          .eq('user_id', user.id);
+  
+        if (error) {
+          console.error('Error deleting task:', error);
+          Alert.alert('Error deleting task:', error.message);
+        } else {
+          console.log('Delete operation result:', data); // Log success or response from Supabase
+          onDelete(task.id); 
+        }
+      } catch (err) {
+        console.error('Error deleting task:', err);
+      }
+    } catch (err) {
+      console.error('Error getting user session:', err);
+    }
   };
-
+  
+  
+  
   if (!task) return <Text>Loading task...</Text>;
 
   
@@ -110,7 +112,7 @@ const Task = ({ taskId, onDelete }) => {
 
     // When progress reaches 100%, mark task as completed
     if (newProgress == 1) {
-      const updatedTask = { ...task, is_completed: true };
+      const updatedTask = { ...task, is_completed: 1};
       setTask(updatedTask);
       try {
         const { error } = await supabase
