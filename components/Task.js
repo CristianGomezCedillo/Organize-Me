@@ -7,7 +7,6 @@ import { Circle } from 'react-native-progress';
 import { LongPressGestureHandler, PanGestureHandler, State, TapGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 
-
 const Task = ({ taskId, onDelete }) => {
   const [task, setTask] = useState(null);
   const [progressTime, setProgressTime] = useState(0);
@@ -25,7 +24,7 @@ const Task = ({ taskId, onDelete }) => {
       if (error) throw error;
 
       setTask(data);
-      setProgressTime(0);
+      setProgressTime(data.is_completed);
     } catch (err) {
       console.error('Error fetching task:', err);
       Alert.alert('Error fetching task:', err.message);
@@ -91,8 +90,6 @@ const Task = ({ taskId, onDelete }) => {
     }
   };
   
-  
-  
   if (!task) return <Text>Loading task...</Text>;
 
   
@@ -101,32 +98,35 @@ const Task = ({ taskId, onDelete }) => {
 
   const handleProgressClick = async (fullComplete) => {
     let newProgress = Math.min(progressTime + 0.25, 1); // Increment by 25%, max at 100%
-    if(progressTime >= 1){
-      setProgressTime(0); //unclick
+  
+    if (progressTime >= 1) {
+      setProgressTime(0); // Unclick and reset the progress if already complete
     }
-    if(fullComplete){
-      setProgressTime(1);
-    }else{
-      setProgressTime(newProgress); // Update the progress state
+  
+    if (fullComplete) {
+      setProgressTime(1); // If full completion is triggered, set progress to 100%
+    } else {
+      setProgressTime(newProgress); // Update the progress state locally
     }
-
-    // When progress reaches 100%, mark task as completed
-    if (newProgress == 1) {
-      const updatedTask = { ...task, is_completed: 1};
+  
+    // Now ensure that we update the is_completed value in the database
+    try {
+      const updatedTask = { ...task, is_completed: newProgress }; // Update local task state
       setTask(updatedTask);
-      try {
-        const { error } = await supabase
-          .from('tasks_table')
-          .update({ is_completed: true })
-          .eq('id', task.id);
-
-        if (error) {
-          console.error('Error updating task status:', error);
-          Alert.alert('Error updating task:', error.message);
-        }
-      } catch (err) {
-        console.error('Error:', err);
+  
+      // Update the task in the database with the new progress value
+      const { error } = await supabase
+        .from('tasks_table')
+        .update({ is_completed: newProgress }) // Update `is_completed` field with the new progress
+        .eq('id', task.id)
+        .eq('user_id', task.user_id); // Ensure only this user's task is updated
+  
+      if (error) {
+        console.error('Error updating task progress:', error);
+        Alert.alert('Error updating task:', error.message);
       }
+    } catch (err) {
+      console.error('Error:', err);
     }
   };
 
@@ -230,7 +230,6 @@ const CircularProgress = ({ progress, size = 100, color = 'lightblue' }) => {
   );
 };
 
-
 const styles = StyleSheet.create({
   taskContainer: {
     backgroundColor: '#ffffff',
@@ -262,13 +261,13 @@ const styles = StyleSheet.create({
   taskDetails: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginLeft: 94,
+    marginLeft: 52,
   },
   description: {
     fontSize: 14,
     color: '#666666',
     marginBottom: 8,
-    marginLeft: 94,
+    marginLeft: 52,
   },
   statusBadge: {
     paddingHorizontal: 8,
@@ -307,13 +306,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   wheel: {
-    padding: 10,
-    marginVertical: 5,
-    flexDirection: 'row',
-    marginBottom: -100,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 40, // Set a fixed height
   },
   progress: {
     marginBottom: 1,
+    height: 40, // Ensure consistent height
+    width: 40, // Ensure consistent width
   },
   progressText: {
     fontSize: 16,
@@ -325,4 +325,3 @@ const styles = StyleSheet.create({
 });
 
 export default Task;
-
