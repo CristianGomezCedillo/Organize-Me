@@ -1,24 +1,51 @@
 # Organize-Me
 
-Expo Tutorial: https://docs.expo.dev/tutorial/build-a-screen/
-DO NOT create a new expo project.
-MAKE SURE YOU HAVE THIS REPO OPENED RATHER THAN CREATING A NEW EXPO PROJECT!
-Navigate into the inner Organize-Me folder and type `npmx expo start`
+## Web Build
+https://latinkiri11.github.io/Organize-Me/
+Command to deploy new web build: 
 
--P.S Make sure you have the expo CLI  installed
+`npm run deploy`
 
-Run the this command to install expo `npm install --global expo-cli`
+This will run pre-configured GIT commands which will push to gh-pages branch, where the web build deploys from
 
-This will install expo command line and expo allowing you to use the expo start command at the beginning 
+## Run Project
+Install libraries if changed 
 
-Before it will allow you to run the appp it will ask you to install the depenedencies use the:
-`npm install` command to catch up to date
+`npm install`
 
-It should only need to be ran once.
+Navigate inside of Organize-Me folder, then:
 
-JUST REFRESH BROWSER TO SEE CHANGES (localhost:8081)
+`npx expo start`
 
-#Set Up GitHub
+View changes: (localhost:8081)
+
+## First Time Install
+Run the this command to install expo 
+
+`npm install --global expo-cli`
+
+## Use the Plant Message popup
+-imports: 
+```
+import PlantMessage from "../../components/PlantMessage";
+import React, { useState, useEffect, useRef} from 'react';
+```
+-At start of page body: 
+```
+const messageRef = useRef(null);
+```
+-When you want to show:
+```
+messageRef.current.changeMessage('Task deleted successfully!');
+messageRef.current.changeImageSource("../../assets/images/Plants/plant2_complete.png")
+messageRef.current.show(); // Show the modal
+```
+-within the View:
+```
+<PlantMessage ref={messageRef} initialText="Initial Message" />
+```
+
+## Set Up GitHub
 
 Clone your forked repository
 
@@ -38,12 +65,16 @@ Fetch changes from Cristian's repo and then push changes
 Optional: Add your own branch
 
 
-QUESTIONS! 
+Note: If you run into an issue and you want to deploy make sure you run these to commands first:
 
-Do we want a login?
+`npm install --save-dev gh-pages`
 
--Yes, because we have a database and we don't want users to have other user tasks overlayed on to thier app. 
-This is for security reasons.
+`npm install`
+
+Afterwords in order to deploy changes to the webpage run this command:
+
+`npm run deploy`
+
 
 `git add .`
 
