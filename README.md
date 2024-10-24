@@ -1,40 +1,44 @@
 # Organize-Me
 
-#Run Project
+# Run Project
 Install libraries if changed `npm install`
 Navigate inside of Organize-Me folder, start: `npx expo start`
 View changes: (localhost:8081)
 
-#First Time Install
+# First Time Install
 Run the this command to install expo `npm install --global expo-cli`
 
 Before it will allow you to run the appp it will ask you to install the depenedencies use the:
 `npm install` command to catch up to date
 
-#Web Build
+# Web Build
 https://latinkiri11.github.io/Organize-Me/
 Deploy new web build: `npm run deploy`
 
 This will run pre-configured GIT commands which will push to gh-pages branch, where the web build deploys from
 
-#Use the Plant Message popup
--imports: '''
+# Use the Plant Message popup
+-imports: 
+```
 import PlantMessage from "../../components/PlantMessage";
 import React, { useState, useEffect, useRef} from 'react';
-'''
--At start of page body: '''
+```
+-At start of page body: 
+```
 const messageRef = useRef(null);
-'''
--When you want to show: '''
+```
+-When you want to show:
+```
 messageRef.current.changeMessage('Task deleted successfully!');
 messageRef.current.changeImageSource("../../assets/images/Plants/plant2_complete.png")
 messageRef.current.show(); // Show the modal
-'''
--within the View: '''
+```
+-within the View:
+```
 <PlantMessage ref={messageRef} initialText="Initial Message" />
-'''
+```
 
-#Set Up GitHub
+# Set Up GitHub
 
 Clone your forked repository
 
