@@ -1,24 +1,28 @@
 # Organize-Me
 
+## Web Build
+https://latinkiri11.github.io/Organize-Me/
+Command to deploy new web build: 
+
+`npm run deploy`
+
+This will run pre-configured GIT commands which will push to gh-pages branch, where the web build deploys from
+
 ## Run Project
 Install libraries if changed 
 
 `npm install`
-Navigate inside of Organize-Me folder, start: 
+
+Navigate inside of Organize-Me folder, then:
 
 `npx expo start`
+
 View changes: (localhost:8081)
 
 ## First Time Install
 Run the this command to install expo 
 
 `npm install --global expo-cli`
-
-## Web Build
-https://latinkiri11.github.io/Organize-Me/
-Deploy new web build: `npm run deploy`
-
-This will run pre-configured GIT commands which will push to gh-pages branch, where the web build deploys from
 
 ## Use the Plant Message popup
 -imports: 
