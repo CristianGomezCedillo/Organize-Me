@@ -7,6 +7,18 @@ import { Circle } from 'react-native-progress';
 import { LongPressGestureHandler, PanGestureHandler, State, TapGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 
+const genreIcons = {
+  "Self-Care & Hygiene": "heart",
+  "Household & Chores": "home",
+  "Finances & Bills": "wallet",
+  "School & Learning": "school",
+  "Work & Career": "briefcase",
+  "Physical Health & Fitness": "fitness",
+  "Social & Relationships": "people",
+  "Hobbies & Recreation": "game-controller",
+  "Errands & Miscellaneous": "cart",
+  "Planning & Organization": "calendar",
+};
 
 const Task = ({ taskId, onDelete }) => {
   const [task, setTask] = useState(null);
@@ -25,7 +37,7 @@ const Task = ({ taskId, onDelete }) => {
       if (error) throw error;
 
       setTask(data);
-      setProgressTime(0);
+      setProgressTime(data.is_completed);
     } catch (err) {
       console.error('Error fetching task:', err);
       Alert.alert('Error fetching task:', err.message);
@@ -57,40 +69,40 @@ const Task = ({ taskId, onDelete }) => {
   };
 
   const handleDelete = async () => {
-    Alert.alert(
-      'Delete Task',
-      'Are you sure you want to delete this task?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'OK',
-          onPress: async () => {
-            try {
-              const { error } = await supabase
-                .from('tasks_table')
-                .delete()
-                .eq('id', task.id);
-
-              if (error) {
-                console.error('Error deleting task:', error);
-                Alert.alert('Error deleting task:', error.message);
-              } else {
-                Alert.alert('Task deleted successfully');
-                onDelete(task.id);
-              }
-            } catch (err) {
-              console.error('Error:', err);
-            }
-          },
-        },
-      ],
-      { cancelable: false }
-    );
+    try {
+      const { data: userData, error: userError } = await supabase.auth.getSession();
+  
+      if (userError || !userData?.session?.user) {
+        console.error('User session error:', userError);
+        Alert.alert('You must be logged in to delete tasks.');
+        return;
+      }
+  
+      const user = userData.session.user;
+      console.log('User ID:', user.id);
+  
+      try {
+        const { data, error } = await supabase
+          .from('tasks_table')
+          .delete()
+          .eq('id', task.id)
+          .eq('user_id', user.id);
+  
+        if (error) {
+          console.error('Error deleting task:', error);
+          Alert.alert('Error deleting task:', error.message);
+        } else {
+          console.log('Delete operation result:', data);
+          onDelete(task.id); 
+        }
+      } catch (err) {
+        console.error('Error deleting task:', err);
+      }
+    } catch (err) {
+      console.error('Error getting user session:', err);
+    }
   };
-
+  
   if (!task) return <Text>Loading task...</Text>;
 
   
@@ -98,58 +110,54 @@ const Task = ({ taskId, onDelete }) => {
   const isOverdue = isAfter(new Date(), dueDate);
 
   const handleProgressClick = async (fullComplete) => {
-    let newProgress = Math.min(progressTime + 0.25, 1); // Increment by 25%, max at 100%
-    if(progressTime >= 1){
-      setProgressTime(0); //unclick
+    let newProgress = Math.min(progressTime + 0.25, 1);
+  
+    if (progressTime >= 1) {
+      setProgressTime(0);
     }
-    if(fullComplete){
+  
+    if (fullComplete) {
       setProgressTime(1);
-    }else{
-      setProgressTime(newProgress); // Update the progress state
+    } else {
+      setProgressTime(newProgress);
     }
-
-    // When progress reaches 100%, mark task as completed
-    if (newProgress == 1) {
-      const updatedTask = { ...task, is_completed: true };
+  
+    try {
+      const updatedTask = { ...task, is_completed: newProgress };
       setTask(updatedTask);
-      try {
-        const { error } = await supabase
-          .from('tasks_table')
-          .update({ is_completed: true })
-          .eq('id', task.id);
-
-        if (error) {
-          console.error('Error updating task status:', error);
-          Alert.alert('Error updating task:', error.message);
-        }
-      } catch (err) {
-        console.error('Error:', err);
+  
+      const { error } = await supabase
+        .from('tasks_table')
+        .update({ is_completed: newProgress })
+        .eq('id', task.id)
+        .eq('user_id', task.user_id);
+  
+      if (error) {
+        console.error('Error updating task progress:', error);
+        Alert.alert('Error updating task:', error.message);
       }
+    } catch (err) {
+      console.error('Error:', err);
     }
   };
 
-  //Code for swiping to delete
   const deleteThreshold = 150;
   const onGestureEvent = Animated.event(
     [{ nativeEvent: { translationX: translateX } }],
     { useNativeDriver: true }
   );
 
-  // Handle state change to detect when gesture is released
   const onHandlerStateChange = (event) => {
     if (event.nativeEvent.state === State.END) {
-      // If dragged past threshold, animate task offscreen and delete
       if (Math.abs(event.nativeEvent.translationX) > deleteThreshold) {
         Animated.timing(translateX, {
-          toValue: 3000, // Move offscreen
+          toValue: 3000,
           duration: 1000,
           useNativeDriver: true,
         }).start(() => {
-          // Call delete function once the animation is done
           handleDelete();
         });
       } else {
-        // Reset position if not past the threshold
         Animated.spring(translateX, {
           toValue: 0,
           useNativeDriver: true,
@@ -165,58 +173,63 @@ const Task = ({ taskId, onDelete }) => {
         onHandlerStateChange={onHandlerStateChange}
       >
         <Animated.View style={[styles.taskContainer, { transform: [{ translateX }] }]}>
-          {/* Wrap all components that should be long-pressable in a single View */}
           <LongPressGestureHandler onActivated={() => setEditModalVisible(true)}>
             <View>
-            <View style={styles.taskHeader}>
-              <TapGestureHandler onActivated={() => handleProgressClick(false)}>
-                <View style={styles.progressContainer}>
-                  {/* Show the right icon based on progress */}
-                  {progressTime === 1 ? (
-                    <Ionicons name="checkmark-circle-sharp" size={40} color="green" />
-                  ) : progressTime === 0 ? (
-                    <Ionicons name="square-outline" size={40} color="black" />
-                  ) : (
-                    <CircularProgress progress={progressTime} size={40} />
-                  )}
+              <View style={styles.taskHeader}>
+                <View style={styles.progressAndIconContainer}>
+                  <TapGestureHandler onActivated={() => handleProgressClick(false)}>
+                    <View style={styles.progressContainer}>
+                      {progressTime === 1 ? (
+                        <Ionicons name="checkmark-circle-sharp" size={40} color="green" />
+                      ) : progressTime === 0 ? (
+                        <Ionicons name="square-outline" size={40} color="black" />
+                      ) : (
+                        <CircularProgress progress={progressTime} size={40} />
+                      )}
+                    </View>
+                  </TapGestureHandler>
+                  <Ionicons 
+                    name={genreIcons[task.genre] || "help-circle"} 
+                    size={24} 
+                    color="#007AFF" 
+                    style={styles.genreIcon} 
+                  />
                 </View>
-              </TapGestureHandler>
-              <Text style={styles.taskName}>{task.task_name}</Text>
-              <View style={[styles.statusBadge, task.is_completed ? styles.completedBadge : (isOverdue ? styles.overdueBadge : styles.pendingBadge)]}>
-                <Text style={styles.statusText}>
-                  {task.is_completed ? 'Completed' : (isOverdue ? 'Overdue' : 'Pending')}
-                </Text>
+                <Text style={styles.taskName}>{task.task_name}</Text>
+                <View style={[styles.statusBadge, task.is_completed ? styles.completedBadge : (isOverdue ? styles.overdueBadge : styles.pendingBadge)]}>
+                  <Text style={styles.statusText}>
+                    {task.is_completed ? 'Completed' : (isOverdue ? 'Overdue' : 'Pending')}
+                  </Text>
+                </View>
               </View>
-            </View>
-            <Text style={styles.description}>{task.description}</Text>
-            <View style={styles.taskDetails}>
-              <Text style={styles.detailText}>📅 Due: {new Date(task.due_date).toLocaleDateString()}</Text>
-              <Text style={styles.detailText}>⏱️ Time: {task.time_to_take}</Text>
-              <Text style={styles.detailText}>🔄 Repeats: Every {task.repeating} days</Text>
-            </View>
-            <EditTaskModal
-              visible={isEditModalVisible}
-              task={task}
-              onClose={() => setEditModalVisible(false)}
-              onSave={handleUpdate}
-            />
+              <Text style={styles.description}>{task.description}</Text>
+              <View style={styles.taskDetails}>
+                <Text style={styles.detailText}>📅 Due: {new Date(task.due_date).toLocaleDateString()}</Text>
+                <Text style={styles.detailText}>⏱️ Time: {task.time_to_take}</Text>
+                <Text style={styles.detailText}>🔄 Repeats: Every {task.repeating} days</Text>
+              </View>
+              <EditTaskModal
+                visible={isEditModalVisible}
+                task={task}
+                onClose={() => setEditModalVisible(false)}
+                onSave={handleUpdate}
+              />
             </View>
           </LongPressGestureHandler>
         </Animated.View>
       </PanGestureHandler>
     </GestureHandlerRootView>
-);
+  );
 };
 
-//A circular progress bar that shows up when the task has multiple sittings
 const CircularProgress = ({ progress, size = 100, color = 'lightblue' }) => {
   return (
     <View style={styles.wheel}>
       <Circle
-        progress={progress} // A value between 0 and 1
-        size={size} // Size of the circle
-        indeterminate={progress === null} // If true, it will show an indeterminate state
-        color={color} // Color of the progress
+        progress={progress}
+        size={size}
+        indeterminate={progress === null}
+        color={color}
         style={styles.progress}
       />
       {progress !== null && (
@@ -227,7 +240,6 @@ const CircularProgress = ({ progress, size = 100, color = 'lightblue' }) => {
     </View>
   );
 };
-
 
 const styles = StyleSheet.create({
   taskContainer: {
@@ -244,12 +256,29 @@ const styles = StyleSheet.create({
   taskHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between', 
     marginBottom: 8,
+  },
+  progressAndIconContainer: {
+    alignItems: 'center',
   },
   taskName: {
     fontSize: 18,
     fontWeight: '600',
     flex: 1,
+    marginLeft: 12,
+    marginTop: -50,
+  },
+  description: {
+    marginLeft: 54,
+    fontSize: 14,
+    color: '#666666',
+    marginTop: -50,
+  },
+  taskDetails: {
+    flexDirection: 'row',
+    marginTop: 10,
+    marginLeft: 54
   },
   detailText: {
     fontSize: 14,
@@ -257,70 +286,42 @@ const styles = StyleSheet.create({
     marginRight: 12,
     marginTop: 4,
   },
-  taskDetails: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginLeft: 94,
+  progressContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  description: {
-    fontSize: 14,
-    color: '#666666',
-    marginBottom: 8,
-    marginLeft: 94,
+  genreIcon: {
+    marginTop: 8, 
   },
   statusBadge: {
-    paddingHorizontal: 8,
+    borderRadius: 8,
     paddingVertical: 4,
-    borderRadius: 12,
-  },
-  pendingBadge: {
-    backgroundColor: '#007AFF',
+    paddingHorizontal: 8,
   },
   completedBadge: {
-    backgroundColor: '#34C759',
+    backgroundColor: '#d4edda',
   },
   overdueBadge: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: '#f8d7da',
+  },
+  pendingBadge: {
+    backgroundColor: '#ffeeba',
   },
   statusText: {
-    color: '#ffffff',
     fontSize: 12,
     fontWeight: '600',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 8,
-  },
-  deleteButton: {
-    backgroundColor: '#FF3B30',
-    borderRadius: 20,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    marginTop: -30,
-  },
-  deleteButtonText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
+    color: '#333',
   },
   wheel: {
-    padding: 10,
-    marginVertical: 5,
-    flexDirection: 'row',
-    marginBottom: -100,
-  },
-  progress: {
-    marginBottom: 1,
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   progressText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  progressContainer: {
-    marginRight: 10,
+    position: 'absolute',
+    fontWeight: '600',
   },
 });
 
-export default Task;
 
+export default Task;
