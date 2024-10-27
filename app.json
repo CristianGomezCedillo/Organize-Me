@@ -4,6 +4,7 @@
     "slug": "Organize-Me",
     "version": "1.0.0",
     "orientation": "portrait",
+    "scheme": "organizeme",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
     "entryPoint": "./node_modules/expo-router/entry",
@@ -28,6 +29,7 @@
     "plugins": [
       "expo-router",
       [
+        
        "expo-font",
         {
           "fonts": ["node_modules/@expo-google-fonts/inter/Inter_900Black.ttf"]
