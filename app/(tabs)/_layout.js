@@ -49,9 +49,6 @@ export default function Layout() {
           } else if (route.name === 'Profile') { 
             iconName = 'person'; 
           }
-          else if (route.name === 'Profile') {
-            iconName = 'person';
-          }
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -88,13 +85,6 @@ export default function Layout() {
         options={{
           tabBarLabel: 'Calendar',
           headerTitle: 'Calendar',
-        }}
-      />
-      <Tabs.Screen
-        name="Profile"
-        options={{
-          tabBarLabel: 'Profile',
-          headerTitle: 'Profile',
         }}
       />
     </Tabs>
