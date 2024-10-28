@@ -49,12 +49,16 @@ export default function Layout() {
           } else if (route.name === 'Profile') { 
             iconName = 'person'; 
           }
+          else if (route.name === 'Profile') {
+            iconName = 'person';
+          }
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarStyle: {
           backgroundColor: '#806043', 
           height: 60,
+
         },
         headerStyle: {
           backgroundColor: '#2E8B57',
@@ -86,7 +90,7 @@ export default function Layout() {
           headerTitle: 'Calendar',
         }}
       />
-      <Tabs.Screen // Add Profile tab
+      <Tabs.Screen
         name="Profile"
         options={{
           tabBarLabel: 'Profile',
