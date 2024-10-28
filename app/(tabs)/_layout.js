@@ -34,7 +34,7 @@ export default function Layout() {
   return user ? (
     <Tabs
       screenOptions={({ route }) => ({
-        tabBarActiveTintColor: '#8B4513',
+        tabBarActiveTintColor: '#4CAF50',
         tabBarInactiveTintColor: '#F5F5DC',
         tabBarIcon: ({ color, size }) => {
           let iconName;
@@ -42,27 +42,27 @@ export default function Layout() {
           // Set icon based on the route name
           if (route.name === 'index') {
             iconName = 'home';
-          } else if (route.name === 'Calendar') {
-            iconName = 'calendar';
           } else if (route.name === 'TaskList') {
             iconName = 'list';
-          }
-          else if (route.name === 'Profile') {
-            iconName = 'person';
+          } else if (route.name === 'Calendar') {
+            iconName = 'calendar';
+          } else if (route.name === 'Profile') { 
+            iconName = 'person'; 
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarStyle: {
-          backgroundColor: '#2E8B57', // Tab bar background color
-          height: 60, // Adjust the height of the tab bar
+          backgroundColor: '#806043', 
+          height: 60,
+
         },
         headerStyle: {
-          backgroundColor: '#2E8B57', // Header background color
+          backgroundColor: '#2E8B57',
         },
         headerTitleStyle: {
-          color: '#F5F5DC', // Color for the header title
-          fontSize: 20, // Font size for the header title
+          color: 'darkseagreen',
+          fontSize: 20,
         },
       })}
     >
@@ -71,7 +71,6 @@ export default function Layout() {
         options={{
           tabBarLabel: 'Dashboard',
           headerTitle: 'Dashboard',
-          fontWeight: 'Bold',
         }}
       />
       <Tabs.Screen
@@ -86,13 +85,6 @@ export default function Layout() {
         options={{
           tabBarLabel: 'Calendar',
           headerTitle: 'Calendar',
-        }}
-      />
-      <Tabs.Screen
-        name="Profile"
-        options={{
-          tabBarLabel: 'Profile',
-          headerTitle: 'Profile',
         }}
       />
     </Tabs>
