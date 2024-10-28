@@ -1,51 +1,24 @@
 # Organize-Me
 
-## Web Build
-https://latinkiri11.github.io/Organize-Me/
-Command to deploy new web build: 
+Expo Tutorial: https://docs.expo.dev/tutorial/build-a-screen/
+DO NOT create a new expo project.
+MAKE SURE YOU HAVE THIS REPO OPENED RATHER THAN CREATING A NEW EXPO PROJECT!
+Navigate into the inner Organize-Me folder and type `npmx expo start`
 
-`npm run deploy`
+-P.S Make sure you have the expo CLI  installed
 
-This will run pre-configured GIT commands which will push to gh-pages branch, where the web build deploys from
+Run the this command to install expo `npm install --global expo-cli`
 
-## Run Project
-Install libraries if changed 
+This will install expo command line and expo allowing you to use the expo start command at the beginning 
 
-`npm install`
+Before it will allow you to run the appp it will ask you to install the depenedencies use the:
+`npm install` command to catch up to date
 
-Navigate inside of Organize-Me folder, then:
+It should only need to be ran once.
 
-`npx expo start`
+JUST REFRESH BROWSER TO SEE CHANGES (localhost:8081)
 
-View changes: (localhost:8081)
-
-## First Time Install
-Run the this command to install expo 
-
-`npm install --global expo-cli`
-
-## Use the Plant Message popup
--imports: 
-```
-import PlantMessage from "../../components/PlantMessage";
-import React, { useState, useEffect, useRef} from 'react';
-```
--At start of page body: 
-```
-const messageRef = useRef(null);
-```
--When you want to show:
-```
-messageRef.current.changeMessage('Task deleted successfully!');
-messageRef.current.changeImageSource("../../assets/images/Plants/plant2_complete.png")
-messageRef.current.show(); // Show the modal
-```
--within the View:
-```
-<PlantMessage ref={messageRef} initialText="Initial Message" />
-```
-
-## Set Up GitHub
+#Set Up GitHub
 
 Clone your forked repository
 
@@ -64,6 +37,8 @@ Fetch changes from Cristian's repo and then push changes
 `git checkout main`
 Optional: Add your own branch
 
+We Now Have A GitHub WebPage with our app(Still in Alpha -- testing phase):
+Here is the website link: https://latinkiri11.github.io/Organize-Me/
 
 Note: If you run into an issue and you want to deploy make sure you run these to commands first:
 
@@ -75,6 +50,12 @@ Afterwords in order to deploy changes to the webpage run this command:
 
 `npm run deploy`
 
+QUESTIONS! 
+
+Do we want a login?
+
+-Yes, because we have a database and we don't want users to have other user tasks overlayed on to thier app. 
+This is for security reasons.
 
 `git add .`
 
