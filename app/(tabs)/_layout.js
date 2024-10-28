@@ -53,30 +53,16 @@ export default function Layout() {
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarStyle: {
-<<<<<<< HEAD
           backgroundColor: '#806043', 
           height: 60,
 
-=======
-          backgroundColor: '#2E8B57', // Tab bar background color
-          height: 60, // Adjust the height of the tab bar
-          backgroundColor: '#806043',
-          height: 60, 
->>>>>>> parent of ffcf91b (Added Profile icon/notification/ forget password )
         },
         headerStyle: {
           backgroundColor: '#2E8B57',
         },
         headerTitleStyle: {
-<<<<<<< HEAD
           color: 'darkseagreen',
           fontSize: 20,
-=======
-          color: '#F5F5DC', // Color for the header title
-          fontSize: 20, // Font size for the header title
-          color: 'darkseagreen', 
-          fontSize: 20, 
->>>>>>> parent of ffcf91b (Added Profile icon/notification/ forget password )
         },
       })}
     >
