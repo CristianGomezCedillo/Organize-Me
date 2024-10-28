@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TextInput, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, TextInput, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import { supabase } from './supabaseClient';
 import { useRouter } from 'expo-router';
 
@@ -49,8 +49,11 @@ const SignInScreen = () => {
             return;
         }
 
+        // Send email verification
+        await supabase.auth.sendVerificationEmail(email);
+
         alert('Sign up successful! Please check your email to confirm your account.');
-        router.replace('/');
+        setIsSignUp(false);
     };
 
     const handleSignIn = async () => {
@@ -68,12 +71,33 @@ const SignInScreen = () => {
             return;
         }
 
+        // Check if user's email is verified
+        if (!user.email_confirmed_at) {
+            setError('Please verify your email before logging in.');
+            return;
+        }
+
         router.replace('/');
+    };
+
+    const handleForgotPassword = async () => {
+        if (!email) {
+            setError('Please enter your email to reset the password.');
+            return;
+        }
+
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(email);
+
+        if (resetError) {
+            setError(resetError.message);
+            return;
+        }
+
+        Alert.alert('Password Reset', 'A password reset link has been sent to your email.');
     };
 
     return (
         <View style={styles.container}>
-            {/* Top Sky Bar */}
             <View style={styles.topBar} />
 
             <View style={styles.box}>
@@ -117,6 +141,12 @@ const SignInScreen = () => {
                     <Text style={styles.buttonText}>{isSignUp ? 'Sign Up' : 'Sign In'}</Text>
                 </TouchableOpacity>
 
+                {!isSignUp && (
+                    <TouchableOpacity style={styles.forgotButton} onPress={handleForgotPassword}>
+                        <Text style={styles.forgotButtonText}>Forgot Password?</Text>
+                    </TouchableOpacity>
+                )}
+
                 <TouchableOpacity style={styles.switchButton} onPress={() => setIsSignUp(!isSignUp)}>
                     <Text style={styles.switchButtonText}>
                         {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
@@ -124,7 +154,6 @@ const SignInScreen = () => {
                 </TouchableOpacity>
             </View>
 
-            {/* Bottom Ground Bar */}
             <View style={styles.bottomBar} />
         </View>
     );
@@ -143,7 +172,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         height: 100,
-        backgroundColor: '#87CEEB', // Light sky blue
+        backgroundColor: '#87CEEB',
     },
     bottomBar: {
         position: 'absolute',
@@ -151,7 +180,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         height: 100,
-        backgroundColor: '#8B4513', // Earthy brown color
+        backgroundColor: '#8B4513',
     },
     box: {
         width: '90%',
@@ -205,6 +234,13 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    forgotButton: {
+        paddingVertical: 10,
+    },
+    forgotButtonText: {
+        color: '#4CAF50',
+        fontSize: 14,
     },
     switchButton: {
         paddingVertical: 10,

@@ -1,21 +1,13 @@
 /*  TODO
 
-ADD SEARCH function back -- done.
-add filters back -- done.
-take out the complete field when creating task -- done.
-create task button as a plus symbol -- done.
-put in ryans checkbox -- done and it now updates the database when clicked on to completed.
-
-remove delete button in favor of a slide to delete function. --done
-add user authentication -- oh boy.
-
 task generes (personal, fitness, study, etc)
 add icon to show task genre
 priorities to tasks (high priority, low priority) --done
 additional date that tells the app when to send a notification (potentially (still working on this idea))
+*/
 
-*/ //  TODO
-import React, { useState, useEffect, useRef} from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { View, FlatList, TouchableOpacity, StyleSheet, Text, TextInput } from 'react-native';
 import { supabase } from '../../components/supabaseClient';
 import Task from '../../components/Task';
@@ -32,25 +24,36 @@ const TaskList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [user, setUser] = useState(null);
-  const messageRef = useRef(null); //for the plantmessage
+  const messageRef = useRef(null); // for the plant message
 
   // Fetch current user session
   const fetchUser = async () => {
     const { data: { session }, error } = await supabase.auth.getSession();
     if (error) {
       console.error('Error fetching user session:', error);
+    } else if (session?.user?.email_confirmed_at) {
+      console.log('User authenticated:', session.user);
+      setUser(session.user);
     } else {
-      setUser(session?.user ?? null);
+      console.error('Email not verified.');
     }
   };
 
   // Fetch tasks from Supabase
   const fetchTasks = async () => {
+    console.log("this is user")
+    console.log(user);
+    // if (!user) {
+    //   console.error('User not authenticated.');
+    //   return;
+    // }
+
     const { data, error } = await supabase
       .from('tasks_table')
       .select('*')
-      .or(`user_id.eq.${user?.id},user_id.is.null`); // Show tasks for user and unassigned tasks
-    
+      // .eq('user_id', user.id); // Ensure the user_id is correctly matched
+    console.log('Tasks:', data);
+
     if (error) {
       console.error('Error fetching tasks:', error);
     } else {
@@ -59,20 +62,28 @@ const TaskList = () => {
   };
 
   useEffect(() => {
-    fetchUser(); // Fetch the current user
-  }, []);
+    fetchUser(); // Fetch the current user when component mounts
+  
+
+    
+
+  }, [
+    
+
+    
+  ]);
 
   useEffect(() => {
-    if (user !== null) {
-      fetchTasks(); // Fetch tasks after user is set
-    }
+    fetchTasks(); // Fetch tasks when user changes
   }, [user]);
+
+
 
   // Handle task deletion
   const handleDelete = (taskId) => {
-    //Show the plantMessage
+    // Show the plant message
     messageRef.current.changeMessage('Task deleted successfully!');
-    messageRef.current.changeImageSource("../../assets/images/Plants/plant2_complete.png")
+    messageRef.current.changeImageSource("../../assets/images/Plants/plant2_complete.png");
     messageRef.current.show(); // Show the modal
     setTasks(tasks.filter(task => task.id !== taskId));
   };
@@ -93,16 +104,7 @@ const TaskList = () => {
     setCreateModalVisible(false);
   };
 
-  // Render each task as an item
-  const renderTaskItem = ({ item }) => (
-    <Task
-      key={item.id}
-      taskId={item.id}
-      onEdit={handleEdit}
-      onDelete={handleDelete}
-    />
-  );
-
+  // Filter tasks based on search and status
   const filteredTasks = () => {
     return tasks.filter((task) => {
       const taskNameMatch = task.task_name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -120,14 +122,14 @@ const TaskList = () => {
 
   return (
     <View style={styles.container}>
-      
-      {/* search bar */}
+      {/* Search bar */}
       <TextInput
-            style={styles.searchInput}
-            placeholder="Search tasks..."
-            value={searchQuery}
-            onChangeText={(text) => setSearchQuery(text)}
+        style={styles.searchInput}
+        placeholder="Search tasks..."
+        value={searchQuery}
+        onChangeText={(text) => setSearchQuery(text)}
       />
+
       {/* Filter Buttons */}
       <View style={styles.filterContainer}>
         <TouchableOpacity
@@ -155,21 +157,29 @@ const TaskList = () => {
           <Text>Completed</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Task list */}
       <FlatList
         data={filteredTasks()}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={renderTaskItem}
+        renderItem={({ item }) => (
+          <Task
+            key={item.id}
+            taskId={item.id}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        )}
         contentContainerStyle={styles.listContainer}
       />
 
+      {/* Plant Message */}
       <PlantMessage ref={messageRef} initialText="Initial Message" />
 
       {/* Create Task Button */}
       <TouchableOpacity style={styles.fabButton} onPress={handleCreate}>
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
-
-
 
       {/* Render EditTaskModal */}
       {isEditModalVisible && (

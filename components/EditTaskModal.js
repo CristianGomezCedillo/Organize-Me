@@ -3,6 +3,7 @@ import { Modal, View, Text, TextInput, StyleSheet, TouchableOpacity } from 'reac
 import { commonStyles } from './styles';
 
 const EditTaskModal = ({ visible, task, onClose, onSave }) => {
+  
   const [taskName, setTaskName] = useState(task.task_name);
   const [description, setDescription] = useState(task.description);
   const [timeToTake, setTimeToTake] = useState(task.time_to_take);
