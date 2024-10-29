@@ -201,7 +201,7 @@ const Task = ({ taskId, onDelete }) => {
                   />
                 </View>
                 <Text style={styles.taskName}>{task.task_name}</Text>
-                <View style={[styles.statusBadge, task.is_completed ? styles.completedBadge : (isOverdue ? styles.overdueBadge : styles.pendingBadge)]}>
+                <View style={[styles.statusBadge, task.is_completed===1 ? styles.completedBadge : (isOverdue ? styles.overdueBadge : styles.pendingBadge)]}>
                   <Text style={styles.statusText}>
                     {task.is_completed ? 'Completed' : (isOverdue ? 'Overdue' : 'Pending')}
                   </Text>
