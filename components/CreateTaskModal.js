@@ -7,6 +7,7 @@ import { Picker } from '@react-native-picker/picker'; // Import Picker for dropd
 import ReactDatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
+
 const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
   const [newTask, setNewTask] = useState({
     task_name: '',
@@ -18,6 +19,7 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
     is_completed: 0,
     user_id: null,
   });
+
 
   const genres = [
     "Self-Care & Hygiene",
@@ -32,13 +34,16 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
     "Planning & Organization"
   ];
 
+
   const [user, setUser] = useState(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+
 
   useEffect(() => {
     const today = new Date();
     setNewTask((prev) => ({ ...prev, due_date: today.toISOString().split('T')[0] }));
   }, []);
+
 
   const fetchUser = async () => {
     const { data: { session }, error } = await supabase.auth.getSession();
@@ -49,9 +54,11 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
     }
   };
 
+
   useEffect(() => {
     fetchUser();
   }, []);
+
 
   const handleCreate = async () => {
     try {
@@ -60,9 +67,11 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
         user_id: user?.id || null,
       };
 
+
       const { error } = await supabase
         .from('tasks_table')
         .insert([taskWithUserId]);
+
 
       if (error) {
         console.error('Error creating task:', error);
@@ -77,15 +86,18 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
     }
   };
 
+
   const handleConfirm = (date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const formattedDate = `${year}-${month}-${day}`;
 
+
     setNewTask({ ...newTask, due_date: formattedDate });
     setDatePickerVisibility(false);
   };
+
 
   return (
     <Modal animationType="slide" transparent={true} visible={isVisible}>
@@ -93,12 +105,14 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
         <View style={styles.modalView}>
           <Text style={styles.modalTitle}>Create Task</Text>
 
+
           <TextInput
             placeholder="Task Name"
             value={newTask.task_name}
             onChangeText={(text) => setNewTask({ ...newTask, task_name: text })}
             style={styles.input}
           />
+
 
           <TextInput
             placeholder="Description (optional)"
@@ -109,12 +123,14 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
             numberOfLines={3}
           />
 
+
           <TextInput
             placeholder="Time to Take (optional)"
             value={newTask.time_to_take}
             onChangeText={(text) => setNewTask({ ...newTask, time_to_take: text })}
             style={styles.input}
           />
+
 
           {/* Genre Dropdown */}
           <Picker
@@ -127,6 +143,7 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
               <Picker.Item key={index} label={genre} value={genre} />
             ))}
           </Picker>
+
 
           <View style={styles.datePickerContainer}>
             {Platform.OS === 'web' ? (
@@ -174,6 +191,7 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
             )}
           </View>
 
+
           <TextInput
             placeholder="Repeat every X days (optional)"
             value={newTask.repeating}
@@ -181,6 +199,7 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
             style={styles.input}
             keyboardType="numeric"
           />
+
 
           <View style={styles.modalButtons}>
             <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
@@ -195,6 +214,7 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
     </Modal>
   );
 };
+
 
 const styles = StyleSheet.create({
   modalOverlay: {
@@ -282,5 +302,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
 
 export default CreateTaskModal;
