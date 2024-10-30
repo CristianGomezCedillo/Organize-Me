@@ -100,9 +100,9 @@ const TaskList = () => {
       if (!taskNameMatch) return false;
 
       const dueDate = new Date(task.due_date);
-      if (filterStatus === 'all') return true;
-      if (filterStatus === 'completed') return taskNameMatch && task.is_completed;
-      if (filterStatus === 'pending') return taskNameMatch && !task.is_completed && !isAfter(new Date(), dueDate);
+      if (filterStatus === 'all') return !task.is_completed;
+      if (filterStatus === 'completed') return taskNameMatch && task.is_completed == 1;
+      if (filterStatus === 'pending') return taskNameMatch && !isAfter(new Date(), dueDate);
       if (filterStatus === 'overdue') return taskNameMatch && !task.is_completed && isAfter(new Date(), dueDate);
 
       return false;
@@ -146,12 +146,18 @@ const TaskList = () => {
           <Text>Completed</Text>
         </TouchableOpacity>
       </View>
-      <FlatList
-        data={filteredTasks()}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderTaskItem}
-        contentContainerStyle={styles.listContainer}
-      />
+
+      {filteredTasks().length === 0 ? ( // Check if the filtered task list is empty
+        <Text style={styles.emptyMessage}>Hooray! All your tasks are complete... Add a new task below</Text>
+      ) : (
+        <FlatList
+          data={filteredTasks()}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderTaskItem}
+          contentContainerStyle={styles.listContainer}
+        />
+      )}
+
 
       <PlantMessage ref={messageRef} initialText="Initial Message" />
 
@@ -239,6 +245,12 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: '#ffffff',
     fontWeight: 'bold',
+  },
+  emptyMessage: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 30,
+    color: '#777',
   },
 });
 

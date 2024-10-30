@@ -13,6 +13,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { Platform } from 'react-native';
 import PlantMessage from "../../components/PlantMessage";
 import Plant from '../../components/Plant';
+import { Link } from 'expo-router';
 
 
 // Screen dimensions for graph scaling
@@ -25,41 +26,88 @@ export default function Home() {
   const [pendingTasks, setPendingTasks] = useState(0);
   const [completedTasks, setCompletedTasks] = useState(0);
   const [overdueTasks, setOverdueTasks] = useState(0);
-    const [streakCount, setStreakCount] = useState(0);
-  const [lastOpenedDate, setLastOpenedDate] = useState(null);
-   const fetchStreakData = async () => {
-    const storedDate = await AsyncStorage.getItem('lastOpenedDate');
-    const storedStreak = await AsyncStorage.getItem('streakCount');
+  const [streakCount, setStreakCount] = useState(0);
+  const [lastLoginDate, setLastLoginDate] = useState(null);
+  const [user, setUser] = useState(null);
 
-    if (storedDate) {
-      setLastOpenedDate(new Date(storedDate));
-    }
-
-    if (storedStreak) {
-      setStreakCount(parseInt(storedStreak, 10));
+  // Fetch current user session
+  const fetchUser = async () => {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error('Error fetching user session:', error);
+    } else {
+      setUser(session?.user ?? null);
     }
   };
-  const updateStreak = async () => {
-    const currentDate = new Date();
 
-    if (lastOpenedDate) {
-      const daysDifference = differenceInDays(currentDate, lastOpenedDate);
+  //useEffect will trigger on load, but will first wait for everything specified in the ending brackets to be loaded
+  //First fetch the user, then call FetchTasks to update the pie chart graphic
+  useEffect(() => {
+    fetchUser(); // Fetch the current user
+  }, []);
 
-      if (daysDifference === 1) {
-        setStreakCount((prev) => prev + 1);
-        await AsyncStorage.setItem('streakCount', (streakCount + 1).toString());
-      } else if (daysDifference > 2) {
-        setStreakCount(0);
-        await AsyncStorage.setItem('streakCount', '0');
+  useEffect(() => {
+    if (user !== null) {
+      fetchTasks(); // Fetch tasks after user is set
+    }
+  }, [user]);
+
+  //Streak
+  useEffect(() => {
+    const checkStreak = async () => {
+      try {
+        // Retrieve last login date and streak count from AsyncStorage
+        const storedLastLogin = await AsyncStorage.getItem('lastLoginDate');
+        const storedStreak = await AsyncStorage.getItem('streakCount');
+        
+        const today = new Date();
+        const formattedToday = today.toDateString(); // Only consider the date, not time
+
+        // Check if there is a stored last login date
+        if (storedLastLogin) {
+          // Check if the stored last login date is yesterday
+          const lastLogin = new Date(storedLastLogin);
+          const differenceInDays = Math.floor((today - lastLogin) / (1000 * 60 * 60 * 24));
+
+          if (differenceInDays === 1) {
+            // User logged in on consecutive days, increase streak count
+            const newStreak = parseInt(storedStreak) + 1;
+            setStreakCount(newStreak);
+            ShowPlantMessage(`You’re on a streak! Streak count: ${newStreak}`);
+            await AsyncStorage.setItem('streakCount', newStreak.toString());
+          } else if (differenceInDays > 1) {
+            // User did not log in yesterday, reset streak
+            setStreakCount(1);
+            ShowPlantMessage('Streak reset. Start again!');
+            await AsyncStorage.setItem('streakCount', '1');
+          } else {
+            // User logged in today again, keep the same streak
+            setStreakCount(parseInt(storedStreak));
+            //ShowPlantMessage(`You logged in again today! Streak count: ${storedStreak}`);
+          }
+        } else {
+          // First login, initialize the streak count
+          setStreakCount(1);
+          ShowPlantMessage('Welcome! Start your streak today!');
+          await AsyncStorage.setItem('streakCount', '1');
+        }
+
+        // Update last login date in AsyncStorage
+        await AsyncStorage.setItem('lastLoginDate', formattedToday);
+        setLastLoginDate(formattedToday);
+      } catch (error) {
+        console.error('Error checking streak:', error);
       }
-    }
+    };
 
-    await AsyncStorage.setItem('lastOpenedDate', currentDate.toISOString());
-  };
+    checkStreak();
+  }, []); // Empty dependency array to run only once
   // Fetch tasks and calculate stats
   const fetchTasks = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from('tasks_table').select('*');
+    const { data, error } = await supabase.from('tasks_table')
+      .select('*')
+      .or(`user_id.eq.${user?.id},user_id.is.null`);
 
     if (error) {
       console.error('Error fetching tasks:', error);
@@ -94,13 +142,6 @@ export default function Home() {
     setOverdueTasks(overdue);
   };
 
-  useEffect(() => {
-    fetchTasks();
-    fetchStreakData();
-    updateStreak();
-
-  }, []);
-
   // Graph Data
   const taskData = {
     labels: ['Pending', 'Completed', 'Overdue'],
@@ -110,6 +151,12 @@ export default function Home() {
       },
     ],
   };
+
+  const ShowPlantMessage = (text) =>{
+    messageRef.current.changeMessage(text);
+    messageRef.current.changeImageSource("../../assets/images/Plants/plant2_complete.png")
+    messageRef.current.show(); // Show the modal
+  }
 
   const pieData = [
     { name: 'Pending', tasks: pendingTasks, color: 'Blue', legendFontColor: '#333', legendFontSize: 12 },
@@ -127,23 +174,22 @@ export default function Home() {
         
         {loading ? (
           <Text style={styles.loadingText}>Loading tasks...</Text>
+        ) : tasks.length === 0 ? (
+          <View style={styles.emptyTasksContainer}>
+            <Text style={styles.emptyTasksText}>Welcome to OrganizeMe!</Text>
+            <Link href="/TaskList">
+            <Button
+              label="Get Organized!"
+              theme="primary"
+              onPress={() => {
+                // Add your navigation or task-adding function here
+                console.log("Add Task button pressed");
+              }}
+            />
+            </Link>
+          </View>
         ) : (
           <>
-            {/* Bar Chart 
-              <Text style={styles.chartTitle}>Task Summary (Bar Chart)</Text>
-            <BarChart
-              data={taskData}
-              width={screenWidth - 80} // Adjust to fit your screen width
-              height={220}
-              chartConfig={chartConfig}
-              fromZero
-              style={styles.chartStyle}
-              yAxisLabel=""
-              yAxisSuffix=" tasks"
-            />
-            
-            */}
-            
 
             {/* Pie Chart */}
             <Text style={styles.chartTitle}>Task Breakdown (Pie Chart)</Text>
@@ -178,12 +224,6 @@ export default function Home() {
         )}
       </View>
 
-      <Button label="Get Organized" theme="primary" onPress={() => 
-      {
-        messageRef.current.changeMessage('I am a Plant!');
-        messageRef.current.changeImageSource("../../assets/images/Plants/plant2_complete.png")
-        messageRef.current.show(); // Show the modal
-      }}/>
       <PlantMessage ref={messageRef} initialText="Initial Message" />
       <StatusBar style="auto" />
     </ScrollView>
@@ -231,6 +271,16 @@ const styles = StyleSheet.create({
     fontSize: 50,
     textAlign: 'center',
     marginBottom: 20,
+  },
+  emptyTasksContainer: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  emptyTasksText: {
+    fontSize: 18,
+    color: 'darkbrown',
+    marginBottom: 10,
+    textAlign: 'center',
   },
   dashboard: {
     margin: 20,
