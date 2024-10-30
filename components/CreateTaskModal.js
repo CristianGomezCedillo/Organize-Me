@@ -3,7 +3,7 @@ import { Modal, View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, Plat
 import { supabase } from './supabaseClient';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { Ionicons } from '@expo/vector-icons';
-import { Picker } from '@react-native-picker/picker'; // Import Picker for dropdown list
+import { Picker } from '@react-native-picker/picker';
 import ReactDatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
@@ -13,7 +13,7 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
     description: '',
     time_to_take: '',
     due_date: '',
-    genre: '', // Add genre to newTask state
+    genre: '',
     repeating: 0,
     is_completed: 0,
     user_id: null,
