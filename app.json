@@ -6,6 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
+    "assets": "./assets/*",
     "entryPoint": "./node_modules/expo-router/entry",
     "homepage": "https://latinkiri11.github.io/Organize-Me",
     "splash": {

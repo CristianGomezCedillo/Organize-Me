@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Modal, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput } from 'react-native';
 import { Agenda } from 'react-native-calendars';
 import { supabase } from '../../components/supabaseClient';
 import Task from '../../components/Task';
@@ -17,6 +17,7 @@ export default function Home() {
   const [isEditModalVisible, setEditModalVisible] = useState(false);
   const [isCreateModalVisible, setCreateModalVisible] = useState(false);
   const [user, setUser] = useState(null);
+  const [hasTasks, setHasTasks] = useState(true);
   const [tempHours, setTempHours] = useState([3,3,3,3,3,3,3]);
   const [isSettingsModalVisible, setSettingsModalVisible] = useState(false);
   const [hoursPerDay, setHoursPerDay] = useState([]); //Mon, Tues, Wed, Thu, Fri, Sat, Sun hours available for homework
@@ -59,7 +60,7 @@ export default function Home() {
   // Fetch current user session
   const fetchUser = async () => {
     const { data: { session }, error } = await supabase.auth.getSession();
-    if (error) {
+    if (error) {ht4
       console.error('Error fetching user session:', error);
     } else {
       setUser(session?.user ?? null);
@@ -92,15 +93,17 @@ export default function Home() {
       const { data, error } = await supabase
         .from('tasks_table')
         .select('*')
-        .or(`user_id.eq.${user?.id},user_id.is.null`); // Show tasks for user and unassigned tasks
+        .or(`user_id.eq.${user?.id},user_id.is.null`) // Show tasks for user and unassigned tasks
+        .neq('is_completed',1);
         //.order('due_date', { ascending: true });
 
       if (error) throw error;
+      setHasTasks(data.length > 0);
 
       //Add a field called Priority that is calculated when the task is fetched
       const tasksWithPriority = data.map(task => ({
         ...task,
-        priority: OrganizerAlgorithm.GetPriority(task.due_date,0,task.time_to_take) // Add priority based on the function
+        priority: OrganizerAlgorithm.GetPriority(task.due_date,task.is_completed,task.time_to_take) // Add priority based on the function
       }));
       // Sort tasks by priority (higher priority first)
       tasksWithPriority.sort((a, b) => b.priority - a.priority);
@@ -181,7 +184,7 @@ export default function Home() {
 
     // Handle task deletion
     const handleDelete = (taskId) => {
-      setTasks(tasks.filter(task => task.id !== taskId));
+      //setTasks(tasks.filter(task => task.id !== taskId));
     };
   
     // Open edit modal with selected task
@@ -224,14 +227,6 @@ export default function Home() {
       </View>
     );
   };
-
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0066cc" />
-      </View>
-    );
-  }
 
   const tempHoursChange = (value, index) => {
     const updatedHours = [...tempHours];
@@ -281,34 +276,40 @@ export default function Home() {
         </View>
       </Modal>
 
-
       {/*Agenda component*/}
-      <Agenda
-        items={items}
-        selected={today}
-        loadItemsForMonth={loadItems}
-        renderItem={(item) => (
-          <View style={styles.itemContainer}>
-            <Task
-              key={item.id}
-              taskId={item.id}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
-            <Text>Priority {item.priority}</Text>
+      {/* Display a message when no tasks are fetched */}
+      {!loading && !hasTasks ?(
+          <View style={styles.noTasksContainer}>
+            <Text style={styles.noTasksText}>No tasks scheduled.</Text>
           </View>
+        ):(
+          <Agenda
+            items={items}
+            selected={today}
+            loadItemsForMonth={loadItems}
+            renderItem={(item) => (
+              <View style={styles.itemContainer}>
+                <Task
+                  key={item.id}
+                  taskId={item.id}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+                <Text>Priority {item.priority}</Text>
+              </View>
+            )}
+            renderEmptyDate={renderEmptyDate}
+            onDayPress={(day) => {
+              // If you need to do something when a day is pressed
+            }}
+            theme={{
+              agendaDayTextColor: '#007AFF',
+              agendaDayNumColor: '#007AFF',
+              agendaTodayColor: '#007AFF',
+              agendaKnobColor: '#007AFF'
+            }}
+          />
         )}
-        renderEmptyDate={renderEmptyDate}
-        onDayPress={(day) => {
-          // If you need to do something when a day is pressed
-        }}
-        theme={{
-          agendaDayTextColor: '#007AFF',
-          agendaDayNumColor: '#007AFF',
-          agendaTodayColor: '#007AFF',
-          agendaKnobColor: '#007AFF'
-        }}
-      />
 
       {/* Render EditTaskModal */}
       {isEditModalVisible && (
@@ -351,6 +352,16 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 30,
     paddingHorizontal: 20,
+  },
+  noTasksContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  noTasksText: {
+    fontSize: 18,
+    color: '#777',
   },
   settingsButton: {
     flex: 1,
