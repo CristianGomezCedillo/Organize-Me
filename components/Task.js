@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 const genreIcons = {
   "Self-Care & Hygiene": "heart",
+  "Self-Care & Hygiene": "heart",
   "Household & Chores": "home",
   "Finances & Bills": "wallet",
   "School & Learning": "school",
@@ -110,7 +111,7 @@ const Task = ({ taskId, onDelete }) => {
   const isOverdue = isAfter(new Date(), dueDate);
 
   const handleProgressClick = async (fullComplete) => {
-    let newProgress = Math.min(progressTime + 0.25, 1);
+    let newProgress = Math.min(progressTime + (1/task.time_to_take), 1);
   
     if (progressTime >= 1) {
       setProgressTime(0);
@@ -177,6 +178,8 @@ const Task = ({ taskId, onDelete }) => {
             <View>
               <View style={styles.taskHeader}>
                 <View style={styles.progressAndIconContainer}>
+                  <LongPressGestureHandler onActivated={() => handleProgressClick(true)}>
+                    <View>
                   <TapGestureHandler onActivated={() => handleProgressClick(false)}>
                     <View style={styles.progressContainer}>
                       {progressTime === 1 ? (
@@ -188,6 +191,8 @@ const Task = ({ taskId, onDelete }) => {
                       )}
                     </View>
                   </TapGestureHandler>
+                  </View>
+                  </LongPressGestureHandler>
                   <Ionicons 
                     name={genreIcons[task.genre] || "help-circle"} 
                     size={24} 
@@ -196,7 +201,7 @@ const Task = ({ taskId, onDelete }) => {
                   />
                 </View>
                 <Text style={styles.taskName}>{task.task_name}</Text>
-                <View style={[styles.statusBadge, task.is_completed ? styles.completedBadge : (isOverdue ? styles.overdueBadge : styles.pendingBadge)]}>
+                <View style={[styles.statusBadge, task.is_completed===1 ? styles.completedBadge : (isOverdue ? styles.overdueBadge : styles.pendingBadge)]}>
                   <Text style={styles.statusText}>
                     {task.is_completed ? 'Completed' : (isOverdue ? 'Overdue' : 'Pending')}
                   </Text>
