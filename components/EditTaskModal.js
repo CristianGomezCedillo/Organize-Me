@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, TextInput, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { commonStyles } from './styles';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -6,6 +6,8 @@ import { Picker } from '@react-native-picker/picker';
 import ReactDatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Ionicons } from '@expo/vector-icons';
+import RecurrencePicker from './RecurrencePicker';
+import { handleRepeatLogic } from './RepeatLogic';
 
 const genres = [
   "Self-Care & Hygiene",
@@ -25,23 +27,66 @@ const EditTaskModal = ({ visible, task, onClose, onSave }) => {
   const [description, setDescription] = useState(task.description);
   const [timeToTake, setTimeToTake] = useState(task.time_to_take);
   const [dueDate, setDueDate] = useState(task.due_date);
-  const [repeating, setRepeating] = useState(task.repeating);
   const [isCompleted, setIsCompleted] = useState(task.is_completed);
   const [genre, setGenre] = useState(task.genre);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
 
-  const handleSave = () => {
+  // State for recurrence
+  const [repeatType, setRepeatType] = useState(task.repeat_type || '');
+  const [repeatInterval, setRepeatInterval] = useState(task.repeat_interval || 1);
+  const [weeklyDay, setWeeklyDay] = useState(task.weekly_day || '');
+  const [monthlyOption, setMonthlyOption] = useState(task.monthly_option || '');
+  const [monthlyDay, setMonthlyDay] = useState(task.monthly_day || '');
+  const [monthlyWeek, setMonthlyWeek] = useState(task.monthly_week || '');
+  const [monthlyWeekday, setMonthlyWeekday] = useState(task.monthly_weekday || '');
+  const [yearlyMonth, setYearlyMonth] = useState(task.yearly_month || '');
+  const [yearlyWeek, setYearlyWeek] = useState(task.yearly_week || '');
+  const [yearlyWeekday, setYearlyWeekday] = useState(task.yearly_weekday || '');
+
+  const handleSave = async () => {
     const updatedTask = {
       ...task,
       task_name: taskName,
       description,
       time_to_take: timeToTake,
       due_date: dueDate,
-      repeating,
-      is_completed: isCompleted,
+      is_completed: isCompleted ? 1 : 0,
       genre,
+      repeat_type: repeatType,
+      repeat_interval: repeatInterval,
+      weekly_day: weeklyDay,
+      monthly_option: monthlyOption,
+      monthly_day: monthlyDay,
+      monthly_week: monthlyWeek,
+      monthly_weekday: monthlyWeekday,
+      yearly_month: yearlyMonth,
+      yearly_week: yearlyWeek,
+      yearly_weekday: yearlyWeekday,
     };
-    onSave(updatedTask);
+
+    console.log('Updated Task:', updatedTask); // Log the updated task
+
+    if (isCompleted) {
+      console.log('Task is marked as completed.'); // Log the completion check
+    
+      // Handle creating a new task based on the recurrence logic
+      if (repeatType) {
+        console.log('Repeat Type:', repeatType); // Log the repeat type
+        try {
+          await handleRepeatLogic(updatedTask); // Call the handleRepeatLogic function
+          console.log('handleRepeatLogic executed successfully.'); // Log successful execution
+        } catch (error) {
+          console.error('Error creating repeating tasks:', error);
+        }
+      } else {
+        console.log('No repeat type defined.'); // Log when no repeat type
+      }
+    
+    
+    }
+
+    onSave(updatedTask); // Save the current task details
+    onClose(); // Close the modal after saving
   };
 
   const handleConfirm = (date) => {
@@ -49,6 +94,28 @@ const EditTaskModal = ({ visible, task, onClose, onSave }) => {
     setDueDate(formattedDate);
     setDatePickerVisibility(false);
   };
+
+  useEffect(() => {
+    // Initialize state with the task data
+    setTaskName(task.task_name);
+    setDescription(task.description);
+    setTimeToTake(task.time_to_take);
+    setDueDate(task.due_date);
+    setIsCompleted(task.is_completed);
+    setGenre(task.genre);
+    
+    // Set recurrence fields
+    setRepeatType(task.repeat_type || '');
+    setRepeatInterval(task.repeat_interval || 1);
+    setWeeklyDay(task.weekly_day || '');
+    setMonthlyOption(task.monthly_option || '');
+    setMonthlyDay(task.monthly_day || '');
+    setMonthlyWeek(task.monthly_week || '');
+    setMonthlyWeekday(task.monthly_weekday || '');
+    setYearlyMonth(task.yearly_month || '');
+    setYearlyWeek(task.yearly_week || '');
+    setYearlyWeekday(task.yearly_weekday || '');
+  }, [task]);
 
   return (
     <Modal
@@ -135,6 +202,32 @@ const EditTaskModal = ({ visible, task, onClose, onSave }) => {
             )}
           </View>
 
+          {/* Recurrence Picker */}
+          <RecurrencePicker
+            repeatType={repeatType}
+            repeatInterval={repeatInterval}
+            weeklyDay={weeklyDay}
+            monthlyOption={monthlyOption}
+            monthlyDay={monthlyDay}
+            monthlyWeek={monthlyWeek}
+            monthlyWeekday={monthlyWeekday}
+            yearlyMonth={yearlyMonth}
+            yearlyWeek={yearlyWeek}
+            yearlyWeekday={yearlyWeekday}
+            onChange={(updatedRecurrence) => {
+              setRepeatType(updatedRecurrence.repeatType);
+              setRepeatInterval(updatedRecurrence.repeatInterval);
+              setWeeklyDay(updatedRecurrence.weeklyDay);
+              setMonthlyOption(updatedRecurrence.monthlyOption);
+              setMonthlyDay(updatedRecurrence.monthlyDay);
+              setMonthlyWeek(updatedRecurrence.monthlyWeek);
+              setMonthlyWeekday(updatedRecurrence.monthlyWeekday);
+              setYearlyMonth(updatedRecurrence.yearlyMonth);
+              setYearlyWeek(updatedRecurrence.yearlyWeek);
+              setYearlyWeekday(updatedRecurrence.yearlyWeekday);
+            }}
+          />
+
           <TouchableOpacity 
             style={[styles.completedButton, isCompleted && styles.completedButtonActive]}
             onPress={() => setIsCompleted(!isCompleted)}
@@ -149,7 +242,7 @@ const EditTaskModal = ({ visible, task, onClose, onSave }) => {
               <Text style={commonStyles.buttonText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity style={commonStyles.submitButton} onPress={handleSave}>
-              <Text style={commonStyles.buttonText}>Update</Text>
+              <Text style={commonStyles.buttonText}>Save</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -159,18 +252,37 @@ const EditTaskModal = ({ visible, task, onClose, onSave }) => {
 };
 
 const styles = StyleSheet.create({
-  textArea: {
-    height: 80,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  pickerContainer: {
+  modalView: {
+    width: '90%',
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  input: {
+    width: '100%',
     borderWidth: 1,
     borderColor: '#E5E5EA',
     borderRadius: 8,
+    padding: 12,
     marginBottom: 16,
-  },
-  picker: {
-    width: '100%',
-    height: 50,
+    fontSize: 16,
   },
   datePickerContainer: {
     flexDirection: 'row',
@@ -179,16 +291,25 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   webDatePickerContainer: {
-    position: 'relative',
-  },
-  webDatePickerInput: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
-    padding: 12,
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  webDatePickerInput: {
+    flex: 1,
     borderWidth: 1,
     borderColor: '#E5E5EA',
     borderRadius: 8,
+    padding: 12,
+    marginRight: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
   },
   completedButton: {
     width: '100%',
@@ -208,10 +329,24 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     flex: 1,
-    padding: 12,
-    borderRadius: 8,
     backgroundColor: '#FF3B30',
-    marginRight: 8,
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+  },
+  submitButton: {
+    flex: 1,
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  inputText: {
+    fontSize: 16,
   },
 });
 
