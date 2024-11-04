@@ -38,7 +38,7 @@ export default function Home() {
         // If there's no stored value, initialize it with default values
         setHoursPerDay([3, 3, 3, 3, 3, 3, 3]);
         setTempHours([3, 3, 3, 3, 3, 3, 3]);
-        await AsyncStorage.setItem('HoursPerDay', JSON.stringify(defaultHours));
+        await AsyncStorage.setItem('HoursPerDay', JSON.stringify([3, 3, 3, 3, 3, 3, 3]));
       }
 
     } catch (error) {
