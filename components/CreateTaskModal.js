@@ -3,23 +3,38 @@ import { Modal, View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, Plat
 import { supabase } from './supabaseClient';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { Ionicons } from '@expo/vector-icons';
-import { Picker } from '@react-native-picker/picker'; // Import Picker for dropdown list
+import { Picker } from '@react-native-picker/picker';
 import ReactDatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
 
 const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
+
+  const { //required for notification
+    scheduleNotification,
+    cancelAllNotifications,
+    getAllScheduledNotifications
+  } = useNotifications();
+
   const [newTask, setNewTask] = useState({
     task_name: '',
     description: '',
     time_to_take: '',
     due_date: '',
-    genre: '', // Add genre to newTask state
-    repeating: 0,
+    genre: '',
+    repeat_type: '',
+    repeat_interval: 1,
+    weekly_day: '',
+    monthly_option: '',
+    monthly_day: '',
+    monthly_week: '',
+    monthly_weekday: '',
+    yearly_month: '',
+    yearly_week: '',
+    yearly_weekday: '',
     is_completed: 0,
     user_id: null,
   });
-
 
   const genres = [
     "Self-Care & Hygiene",
@@ -34,16 +49,13 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
     "Planning & Organization"
   ];
 
-
   const [user, setUser] = useState(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-
 
   useEffect(() => {
     const today = new Date();
     setNewTask((prev) => ({ ...prev, due_date: today.toISOString().split('T')[0] }));
   }, []);
-
 
   const fetchUser = async () => {
     const { data: { session }, error } = await supabase.auth.getSession();
@@ -54,11 +66,9 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
     }
   };
 
-
   useEffect(() => {
     fetchUser();
   }, []);
-
 
   const handleCreate = async () => {
     try {
@@ -67,17 +77,27 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
         user_id: user?.id || null,
       };
 
-
       const { error } = await supabase
         .from('tasks_table')
         .insert([taskWithUserId]);
-
 
       if (error) {
         console.error('Error creating task:', error);
         Alert.alert('Error creating task:', error.message);
       } else {
         Alert.alert('Task created successfully');
+
+        //Schedule a notification for the due date at 10am
+        const notification_date = new Date(newTask.due_date);
+        notification_date.setHours(10, 0, 0, 0);
+
+        const id = await scheduleNotification({
+          title: "WAKE UP!",
+          body: "${newTask.task_name} due today!",
+          trigger: { date: notification_date }
+        });
+        console.log('Scheduled time notification:', id);
+
         onClose();
         onCreate();
       }
@@ -86,18 +106,15 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
     }
   };
 
-
   const handleConfirm = (date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const formattedDate = `${year}-${month}-${day}`;
 
-
     setNewTask({ ...newTask, due_date: formattedDate });
     setDatePickerVisibility(false);
   };
-
 
   return (
     <Modal animationType="slide" transparent={true} visible={isVisible}>
@@ -105,14 +122,12 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
         <View style={styles.modalView}>
           <Text style={styles.modalTitle}>Create Task</Text>
 
-
           <TextInput
             placeholder="Task Name"
             value={newTask.task_name}
             onChangeText={(text) => setNewTask({ ...newTask, task_name: text })}
             style={styles.input}
           />
-
 
           <TextInput
             placeholder="Description (optional)"
@@ -123,14 +138,12 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
             numberOfLines={3}
           />
 
-
           <TextInput
             placeholder="Time to Take (optional)"
             value={newTask.time_to_take}
             onChangeText={(text) => setNewTask({ ...newTask, time_to_take: text })}
             style={styles.input}
           />
-
 
           {/* Genre Dropdown */}
           <Picker
@@ -143,7 +156,6 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
               <Picker.Item key={index} label={genre} value={genre} />
             ))}
           </Picker>
-
 
           <View style={styles.datePickerContainer}>
             {Platform.OS === 'web' ? (
@@ -191,15 +203,20 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
             )}
           </View>
 
-
-          <TextInput
-            placeholder="Repeat every X days (optional)"
-            value={newTask.repeating}
-            onChangeText={(text) => setNewTask({ ...newTask, repeating: parseInt(text) || 0 })}
-            style={styles.input}
-            keyboardType="numeric"
+          {/* Recurrence Picker */}
+          <RecurrencePicker
+            repeatType={newTask.repeat_type}
+            repeatInterval={newTask.repeat_interval}
+            weeklyDay={newTask.weekly_day}
+            monthlyOption={newTask.monthly_option}
+            monthlyDay={newTask.monthly_day}
+            monthlyWeek={newTask.monthly_week}
+            monthlyWeekday={newTask.monthly_weekday}
+            yearlyMonth={newTask.yearly_month}
+            yearlyWeek={newTask.yearly_week}
+            yearlyWeekday={newTask.yearly_weekday}
+            onChange={(updatedRecurrence) => setNewTask({ ...newTask, ...updatedRecurrence })}
           />
-
 
           <View style={styles.modalButtons}>
             <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
@@ -214,7 +231,6 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
     </Modal>
   );
 };
-
 
 const styles = StyleSheet.create({
   modalOverlay: {
@@ -256,52 +272,47 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   webDatePickerContainer: {
-    position: 'relative',
-  },
-  webDatePickerInput: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
-    padding: 12,
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  webDatePickerInput: {
+    flex: 1,
     borderWidth: 1,
     borderColor: '#E5E5EA',
     borderRadius: 8,
-  },
-  inputText: {
-    flex: 1,
-    fontSize: 16,
+    padding: 12,
+    marginRight: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginTop: 20,
   },
   cancelButton: {
     flex: 1,
-    padding: 12,
-    borderRadius: 8,
     backgroundColor: '#FF3B30',
-    marginRight: 8,
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
   },
   submitButton: {
     flex: 1,
-    padding: 12,
-    borderRadius: 8,
     backgroundColor: '#007AFF',
-    marginLeft: 8,
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
   },
   buttonText: {
-    color: '#ffffff',
-    textAlign: 'center',
-    fontSize: 16,
+    color: '#FFFFFF',
     fontWeight: '600',
   },
-  picker: {
-    height: 50,
-    width: '100%',
-    marginBottom: 16,
+  inputText: {
     fontSize: 16,
   },
 });
-
 
 export default CreateTaskModal;
