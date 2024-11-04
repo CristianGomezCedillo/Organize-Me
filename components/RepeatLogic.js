@@ -1,7 +1,6 @@
-import { RRule, RRuleSet, rrulestr } from 'rrule';
+import { RRule } from 'rrule';
 import { supabase } from './supabaseClient'; // Update this import according to your setup
 
-// Function to create new tasks based on repeating logic
 export const handleRepeatLogic = async (task) => {
   const {
     repeat_type,
@@ -17,40 +16,38 @@ export const handleRepeatLogic = async (task) => {
     due_date,
   } = task;
 
-  const ruleSet = new RRuleSet();
+  if (!repeat_type) {
+    console.warn("No repeat_type provided. Exiting handleRepeatLogic.");
+    return; // Exit early if repeat_type is null or undefined
+  }
+
   const ruleOptions = {
     freq: null,
     interval: repeat_interval || 1,
     dtstart: new Date(due_date),
   };
 
+  if (isNaN(ruleOptions.dtstart)) {
+    console.error("Invalid due_date provided:", due_date);
+    return;
+  }
+
   // Set the frequency based on repeat_type
-  switch (repeat_type) {
+  switch (repeat_type.toLowerCase()) {
     case 'daily':
       ruleOptions.freq = RRule.DAILY;
       break;
     case 'weekly':
       ruleOptions.freq = RRule.WEEKLY;
-      if (weekly_day && weekly_day.length > 0) {
-        ruleOptions.byweekday = weekly_day.map((day) => {
-          switch (day) {
-            case 'sunday': return RRule.SU;
-            case 'monday': return RRule.MO;
-            case 'tuesday': return RRule.TU;
-            case 'wednesday': return RRule.WE;
-            case 'thursday': return RRule.TH;
-            case 'friday': return RRule.FR;
-            case 'saturday': return RRule.SA;
-            default: return null;
-          }
-        }).filter(Boolean);
+      if (Array.isArray(weekly_day) && weekly_day.length > 0) {
+        ruleOptions.byweekday = weekly_day.map(day => getWeekday(day)).filter(Boolean);
       }
       break;
     case 'monthly':
       ruleOptions.freq = RRule.MONTHLY;
-      if (monthly_option === 'day of the month') {
+      if (monthly_option === 'day of the month' && monthly_day) {
         ruleOptions.bymonthday = [parseInt(monthly_day, 10)];
-      } else if (monthly_option === 'nth week') {
+      } else if (monthly_option === 'nth week' && monthly_week && monthly_weekday) {
         ruleOptions.byweekno = [parseInt(monthly_week, 10)];
         ruleOptions.byweekday = [getWeekday(monthly_weekday)];
       }
@@ -60,37 +57,45 @@ export const handleRepeatLogic = async (task) => {
       if (yearly_month) {
         ruleOptions.bymonth = [getMonth(yearly_month)];
       }
-      if (yearly_week) {
+      if (yearly_week && yearly_weekday) {
         ruleOptions.byweekno = [parseInt(yearly_week, 10)];
         ruleOptions.byweekday = [getWeekday(yearly_weekday)];
       }
       break;
     default:
-      return; // Exit if no valid repeat type
+      console.warn("Invalid repeat_type:", repeat_type);
+      return;
   }
 
-  // Add the rule to the rule set
-  ruleSet.rrule(new RRule(ruleOptions));
+  // Create the rule and generate the next occurrence
+  const rule = new RRule(ruleOptions);
+  const nextDate = rule.after(new Date(due_date));
 
-  // Create new tasks based on the rule
-  const newTasks = ruleSet.all().map(date => {
-    return {
-      ...task, // Copy existing task properties
-      due_date: date.toISOString(),
-      is_completed: 0, // Mark as not completed
-    };
-  });
+  if (!nextDate) {
+    console.warn("No next date generated. Check your RRule configuration.");
+    return;
+  }
 
-  // Save the new tasks to the database
-  await Promise.all(newTasks.map(async (newTask) => {
-    const { error } = await supabase
-      .from('tasks_table')
-      .insert(newTask);
+  // Create the new task with the next due date and remove the id
+  const { id, ...newTaskData } = task; // Destructure and exclude the 'id' field
+  const newTask = {
+    ...newTaskData, // Copy existing task properties without 'id'
+    due_date: nextDate.toISOString() + 1,
+    is_completed: 0, // Mark as not completed
+  };
+
+  // Save the new task to the database
+  try {
+    const { error } = await supabase.from('tasks_table').insert(newTask);
 
     if (error) {
-      console.error('Error inserting new task:', error);
+      console.error("Error inserting new task:", error);
+    } else {
+      console.log("New task inserted successfully.");
     }
-  }));
+  } catch (error) {
+    console.error("Error during task insertion:", error);
+  }
 };
 
 // Helper functions to convert month and weekday strings to numbers
@@ -121,8 +126,6 @@ const getWeekday = (weekday) => {
     thursday: RRule.TH,
     friday: RRule.FR,
     saturday: RRule.SA,
-    weekday: RRule.MO | RRule.TU | RRule.WE | RRule.TH | RRule.FR,
-    weekend: RRule.SA | RRule.SU,
   };
   return weekdays[weekday.toLowerCase()] || null;
 };

@@ -44,6 +44,9 @@ const EditTaskModal = ({ visible, task, onClose, onSave }) => {
   const [yearlyWeekday, setYearlyWeekday] = useState(task.yearly_weekday || '');
 
   const handleSave = async () => {
+    // Log the current repeatType state before creating the updatedTask object
+    console.log('repeatType in state before saving:', repeatType);
+  
     const updatedTask = {
       ...task,
       task_name: taskName,
@@ -52,43 +55,43 @@ const EditTaskModal = ({ visible, task, onClose, onSave }) => {
       due_date: dueDate,
       is_completed: isCompleted ? 1 : 0,
       genre,
-      repeat_type: repeatType,
-      repeat_interval: repeatInterval,
-      weekly_day: weeklyDay,
-      monthly_option: monthlyOption,
-      monthly_day: monthlyDay,
-      monthly_week: monthlyWeek,
-      monthly_weekday: monthlyWeekday,
-      yearly_month: yearlyMonth,
-      yearly_week: yearlyWeek,
-      yearly_weekday: yearlyWeekday,
+      repeat_type: repeatType || task.repeat_type,  // Retain previous value if empty
+      repeat_interval: repeatInterval || task.repeat_interval,
+      weekly_day: weeklyDay || task.weekly_day,
+      monthly_option: monthlyOption || task.monthly_option,
+      monthly_day: monthlyDay || task.monthly_day,
+      monthly_week: monthlyWeek || task.monthly_week,
+      monthly_weekday: monthlyWeekday || task.monthly_weekday,
+      yearly_month: yearlyMonth || task.yearly_month,
+      yearly_week: yearlyWeek || task.yearly_week,
+      yearly_weekday: yearlyWeekday || task.yearly_weekday,
     };
-
-    console.log('Updated Task:', updatedTask); // Log the updated task
-
+  
+    console.log('Updated Task with repeatType:', updatedTask.repeat_type);
+  
     if (isCompleted) {
-      console.log('Task is marked as completed.'); // Log the completion check
-    
-      // Handle creating a new task based on the recurrence logic
-      if (repeatType) {
-        console.log('Repeat Type:', repeatType); // Log the repeat type
+      console.log('Task is marked as completed.');
+  
+      // Log the repeatType check for debugging purposes
+      if (updatedTask.repeat_type) {
+        console.log('Repeat Type:', updatedTask.repeat_type);
+  
         try {
-          await handleRepeatLogic(updatedTask); // Call the handleRepeatLogic function
-          console.log('handleRepeatLogic executed successfully.'); // Log successful execution
+          await handleRepeatLogic(updatedTask);
+          console.log('handleRepeatLogic executed successfully.');
         } catch (error) {
           console.error('Error creating repeating tasks:', error);
         }
       } else {
-        console.log('No repeat type defined.'); // Log when no repeat type
+        console.log('No repeat type defined in updatedTask:', updatedTask.repeat_type);
       }
-    
-    
     }
-
-    onSave(updatedTask); // Save the current task details
-    onClose(); // Close the modal after saving
+  
+    onSave(updatedTask);
+    onClose();
   };
-
+  
+  
   const handleConfirm = (date) => {
     const formattedDate = date.toISOString().split('T')[0];
     setDueDate(formattedDate);
@@ -105,7 +108,7 @@ const EditTaskModal = ({ visible, task, onClose, onSave }) => {
     setGenre(task.genre);
     
     // Set recurrence fields
-    setRepeatType(task.repeat_type || '');
+    setRepeatType(task.repeat_type);
     setRepeatInterval(task.repeat_interval || 1);
     setWeeklyDay(task.weekly_day || '');
     setMonthlyOption(task.monthly_option || '');

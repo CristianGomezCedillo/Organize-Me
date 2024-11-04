@@ -1,11 +1,3 @@
-/*  TODO
-
-task generes (personal, fitness, study, etc)
-add icon to show task genre
-priorities to tasks (high priority, low priority) --done
-additional date that tells the app when to send a notification (potentially (still working on this idea))
-
-*/ //  TODO
 import React, { useState, useEffect, useRef} from 'react';
 import { View, FlatList, TouchableOpacity, StyleSheet, Text, TextInput } from 'react-native';
 import { supabase } from '../../components/supabaseClient';
@@ -23,7 +15,7 @@ const TaskList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [user, setUser] = useState(null);
-  const messageRef = useRef(null); //for the plantmessage
+  const messageRef = useRef(null); // For the plant message
 
   // Fetch current user session
   const fetchUser = async () => {
@@ -60,11 +52,24 @@ const TaskList = () => {
   }, [user]);
 
   // Handle task deletion
-  const handleDelete = (taskId) => {
-    //Show the plantMessage
+  const handleDelete = async (taskId) => {
+    // Delete task from Supabase
+    const { error } = await supabase
+      .from('tasks_table')
+      .delete()
+      .eq('id', taskId);
+    
+    if (error) {
+      console.error('Error deleting task:', error);
+      return;
+    }
+
+    // Show the plantMessage
     messageRef.current.changeMessage('Task deleted successfully!');
-    messageRef.current.changeImageSource("../../assets/images/Plants/plant2_complete.png")
+    messageRef.current.changeImageSource("../../assets/images/Plants/plant2_complete.png");
     messageRef.current.show(); // Show the modal
+
+    // Update local state
     setTasks(tasks.filter(task => task.id !== taskId));
   };
 
@@ -91,6 +96,11 @@ const TaskList = () => {
       taskId={item.id}
       onEdit={handleEdit}
       onDelete={handleDelete}
+      onUpdate={(updatedTask) => {
+        setTasks((prevTasks) =>
+          prevTasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
+        );
+      }}
     />
   );
 
@@ -101,7 +111,7 @@ const TaskList = () => {
 
       const dueDate = new Date(task.due_date);
       if (filterStatus === 'all') return !task.is_completed;
-      if (filterStatus === 'completed') return taskNameMatch && task.is_completed == 1;
+      if (filterStatus === 'completed') return taskNameMatch && task.is_completed === 1;
       if (filterStatus === 'pending') return taskNameMatch && !isAfter(new Date(), dueDate);
       if (filterStatus === 'overdue') return taskNameMatch && !task.is_completed && isAfter(new Date(), dueDate);
 
@@ -112,12 +122,12 @@ const TaskList = () => {
   return (
     <View style={styles.container}>
       
-      {/* search bar */}
+      {/* Search bar */}
       <TextInput
-            style={styles.searchInput}
-            placeholder="Search tasks..."
-            value={searchQuery}
-            onChangeText={(text) => setSearchQuery(text)}
+        style={styles.searchInput}
+        placeholder="Search tasks..."
+        value={searchQuery}
+        onChangeText={(text) => setSearchQuery(text)}
       />
       {/* Filter Buttons */}
       <View style={styles.filterContainer}>
@@ -158,7 +168,6 @@ const TaskList = () => {
         />
       )}
 
-
       <PlantMessage ref={messageRef} initialText="Initial Message" />
 
       {/* Create Task Button */}
@@ -166,15 +175,17 @@ const TaskList = () => {
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
 
-
-
       {/* Render EditTaskModal */}
       {isEditModalVisible && (
         <EditTaskModal
           task={selectedTask}
           isVisible={isEditModalVisible}
           onClose={() => setEditModalVisible(false)}
-          onUpdate={fetchTasks} // Refresh task list after updating
+          onUpdate={(updatedTask) => {
+            setTasks((prevTasks) =>
+              prevTasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
+            );
+          }} // Update local task state
         />
       )}
 
@@ -183,7 +194,11 @@ const TaskList = () => {
         <CreateTaskModal
           isVisible={isCreateModalVisible}
           onClose={closeCreateModal}
-          onCreate={fetchTasks} // Refresh task list after creating
+          onCreate={async (newTask) => {
+            // Add the new task to the local state
+            setTasks((prevTasks) => [...prevTasks, newTask]);
+            closeCreateModal(); // Close modal after creation
+          }}
         />
       )}
     </View>
