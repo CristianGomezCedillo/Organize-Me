@@ -1,7 +1,7 @@
 import { Modal, View, Text, Pressable, StyleSheet, Image, TouchableWithoutFeedback } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import React, { useState, forwardRef, useImperativeHandle } from 'react';
-
+const plant1 = require('../assets/images/Plants/plant1_complete.png'); //no longer a dynamic reference, because of Android
 
 
 // Use forwardRef to expose functions to parent component
@@ -26,7 +26,7 @@ const PlantMessage = forwardRef(({ initialText }, ref) => {
             <MaterialIcons name="close" color="#fff" size={22} />
           </Pressable>
           <View style={styles.messageContainer}>
-            <Image source={imageSource} style={styles.image}/>
+            <Image source={plant1} style={styles.image}/>
             <Text style={styles.text}>{message}</Text>
           </View>
       </View>

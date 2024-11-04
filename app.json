@@ -6,11 +6,11 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
-    "assets": "./assets/*",
+    "scheme": "Organize-Me",
     "entryPoint": "./node_modules/expo-router/entry",
     "homepage": "https://latinkiri11.github.io/Organize-Me",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/images/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#808080"
     },
@@ -19,25 +19,36 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/organizeme.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.ryanbeaumont.organizeme"
     },
+    "platforms": [
+      "android",
+      "ios",
+      "web"
+    ],
     "web": {
       "favicon": "./assets/images/organizeme.png"
     },
     "plugins": [
       "expo-router",
       [
-       "expo-font",
+        "expo-font",
         {
-          "fonts": ["node_modules/@expo-google-fonts/inter/Inter_900Black.ttf"]
+          "fonts": [
+            "node_modules/@expo-google-fonts/inter/Inter_900Black.ttf"
+          ]
         }
       ]
     ],
     "extra": {
       "supabaseUrl": "https://supabase.com/dashboard/project/btxndlpyarhrgeggpily",
-      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0eG5kbHB5YXJocmdlZ2dwaWx5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjc3Mzg1MzcsImV4cCI6MjA0MzMxNDUzN30.m50-GZpEKEgAuW4Q3oEHFbJxCQ-QbdWdBayNTpcsZLE"
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0eG5kbHB5YXJocmdlZ2dwaWx5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjc3Mzg1MzcsImV4cCI6MjA0MzMxNDUzN30.m50-GZpEKEgAuW4Q3oEHFbJxCQ-QbdWdBayNTpcsZLE",
+      "eas": {
+        "projectId": "f4aa9e8c-84ac-4f14-8d4b-4caef57c5849"
+      }
     },
     "experiments": {
       "baseUrl": "/Organize-Me"
