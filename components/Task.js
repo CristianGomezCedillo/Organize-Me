@@ -6,6 +6,7 @@ import { Circle } from 'react-native-progress'; // Assuming you're using a Circl
 import { supabase } from './supabaseClient'; // Update the import according to your setup
 import EditTaskModal from './EditTaskModal'; // Update the import according to your setup
 import { isAfter } from 'date-fns'; // Make sure to install date-fns
+import { handleRepeatLogic } from './RepeatLogic';
 
 const genreIcons = {
   "Self-Care & Hygiene": { name: "heart", color: "#FF69B4" },
@@ -45,8 +46,23 @@ const Task = ({ taskId, onDelete }) => {
   };
 
   useEffect(() => {
-    fetchTask();
+    fetchTask(); // Initial fetch
+  
+    // Subscribe to real-time changes in the tasks_table
+    const channel = supabase
+    .channel('tasks_table_channel')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tasks_table' }, payload => {
+      console.log('New task inserted:', payload.new);
+      // Logic to handle new task inserted, e.g., re-fetching tasks or updating state
+      fetchTask();
+    })
+    .subscribe();
+    // Cleanup subscription on component unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [taskId]);
+  
 
   const handleUpdate = async (updatedTask) => {
     try {
@@ -134,6 +150,12 @@ const Task = ({ taskId, onDelete }) => {
       if (error) {
         console.error('Error updating task progress:', error);
         Alert.alert('Error updating task:', error.message);
+        return;
+      }
+      // Check if task is completed and has repeat information
+      if (newProgress >= 1 && task.repeat_type && task.repeat_interval) {
+        // Call the repeat logic function
+        await handleRepeatLogic(task);
       }
     } catch (err) {
       console.error('Error:', err);
