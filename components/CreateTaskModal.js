@@ -6,8 +6,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker'; // Import Picker for dropdown list
 import ReactDatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { useNotifications } from './ScheduledNotification'; // Import the hook we created earlier
 
 const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
+
+  const { //required for notification
+    scheduleNotification,
+    cancelAllNotifications,
+    getAllScheduledNotifications
+  } = useNotifications();
+
   const [newTask, setNewTask] = useState({
     task_name: '',
     description: '',
@@ -69,6 +77,18 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
         Alert.alert('Error creating task:', error.message);
       } else {
         Alert.alert('Task created successfully');
+
+        //Schedule a notification for the due date at 10am
+        const notification_date = new Date(newTask.due_date);
+        notification_date.setHours(10, 0, 0, 0);
+
+        const id = await scheduleNotification({
+          title: "WAKE UP!",
+          body: "${newTask.task_name} due today!",
+          trigger: { date: notification_date }
+        });
+        console.log('Scheduled time notification:', id);
+
         onClose();
         onCreate();
       }

@@ -9,8 +9,6 @@ const AppIconImage = require('../../assets/images/organizeme.png');
 import { format, isAfter } from 'date-fns';
 import { differenceInDays } from 'date-fns';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { FontAwesome } from '@expo/vector-icons';
-import { Platform } from 'react-native';
 import PlantMessage from "../../components/PlantMessage";
 import Plant from '../../components/Plant';
 import { Link } from 'expo-router';
@@ -159,9 +157,9 @@ export default function Home() {
   }
 
   const pieData = [
-    { name: 'Pending', tasks: pendingTasks, color: 'Blue', legendFontColor: '#333', legendFontSize: 12 },
+    { name: 'Pending', tasks: pendingTasks, color: '#E0FFFF', legendFontColor: '#333', legendFontSize: 12 },
     { name: 'Completed', tasks: completedTasks, color: '#4CAF50', legendFontColor: '#333', legendFontSize: 12 },
-    { name: 'Overdue', tasks: overdueTasks, color: 'Red', legendFontColor: '#333', legendFontSize: 12 },
+    { name: 'Overdue', tasks: overdueTasks, color: '#CD5C5C', legendFontColor: '#333', legendFontSize: 12 },
   ];
 
   return (
