@@ -1,24 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Animated, StyleSheet, Alert, TouchableOpacity } from 'react-native';
-import { supabase } from './supabaseClient';
-import EditTaskModal from './EditTaskModal';
-import { isAfter } from 'date-fns';
-import { Circle } from 'react-native-progress';
-import { LongPressGestureHandler, PanGestureHandler, State, TapGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Animated, Alert, StyleSheet } from 'react-native';
+import { PanGestureHandler, GestureHandlerRootView, LongPressGestureHandler, TapGestureHandler, State } from 'react-native-gesture-handler'; // Import State
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { Circle } from 'react-native-progress'; // Assuming you're using a Circle from 'react-native-progress'
+import { supabase } from './supabaseClient'; // Update the import according to your setup
+import EditTaskModal from './EditTaskModal'; // Update the import according to your setup
+import { isAfter } from 'date-fns'; // Make sure to install date-fns
 
 const genreIcons = {
-  "Self-Care & Hygiene": "heart",
-  "Self-Care & Hygiene": "heart",
-  "Household & Chores": "home",
-  "Finances & Bills": "wallet",
-  "School & Learning": "school",
-  "Work & Career": "briefcase",
-  "Physical Health & Fitness": "fitness",
-  "Social & Relationships": "people",
-  "Hobbies & Recreation": "game-controller",
-  "Errands & Miscellaneous": "cart",
-  "Planning & Organization": "calendar",
+  "Self-Care & Hygiene": { name: "heart", color: "#FF69B4" },
+  "Household & Chores": { name: "home", color: "#8B4513" },
+  "Finances & Bills": { name: "wallet", color: "#FFD700" },
+  "School & Learning": { name: "school", color: "#1E90FF" },
+  "Work & Career": { name: "briefcase", color: "#000000" },
+  "Physical Health & Fitness": { name: "fitness", color: "#32CD32" },
+  "Social & Relationships": { name: "people", color: "#FF4500" },
+  "Hobbies & Recreation": { name: "game-controller", color: "#8A2BE2" },
+  "Errands & Miscellaneous": { name: "cart", color: "#FF6347" },
+  "Planning & Organization": { name: "calendar", color: "#4682B4" },
 };
 
 const Task = ({ taskId, onDelete }) => {
@@ -72,29 +71,29 @@ const Task = ({ taskId, onDelete }) => {
   const handleDelete = async () => {
     try {
       const { data: userData, error: userError } = await supabase.auth.getSession();
-  
+
       if (userError || !userData?.session?.user) {
         console.error('User session error:', userError);
         Alert.alert('You must be logged in to delete tasks.');
         return;
       }
-  
+
       const user = userData.session.user;
       console.log('User ID:', user.id);
-  
+
       try {
         const { data, error } = await supabase
           .from('tasks_table')
           .delete()
           .eq('id', task.id)
           .eq('user_id', user.id);
-  
+
         if (error) {
           console.error('Error deleting task:', error);
           Alert.alert('Error deleting task:', error.message);
         } else {
           console.log('Delete operation result:', data);
-          onDelete(task.id); 
+          onDelete(task.id);
         }
       } catch (err) {
         console.error('Error deleting task:', err);
@@ -103,36 +102,35 @@ const Task = ({ taskId, onDelete }) => {
       console.error('Error getting user session:', err);
     }
   };
-  
+
   if (!task) return <Text>Loading task...</Text>;
 
-  
   const dueDate = new Date(task.due_date);
   const isOverdue = isAfter(new Date(), dueDate);
 
   const handleProgressClick = async (fullComplete) => {
     let newProgress = Math.min(progressTime + (1/task.time_to_take), 1);
-  
+
     if (progressTime >= 1) {
       setProgressTime(0);
     }
-  
+
     if (fullComplete) {
       setProgressTime(1);
     } else {
       setProgressTime(newProgress);
     }
-  
+
     try {
       const updatedTask = { ...task, is_completed: newProgress };
       setTask(updatedTask);
-  
+
       const { error } = await supabase
         .from('tasks_table')
         .update({ is_completed: newProgress })
         .eq('id', task.id)
         .eq('user_id', task.user_id);
-  
+
       if (error) {
         console.error('Error updating task progress:', error);
         Alert.alert('Error updating task:', error.message);
@@ -180,24 +178,24 @@ const Task = ({ taskId, onDelete }) => {
                 <View style={styles.progressAndIconContainer}>
                   <LongPressGestureHandler onActivated={() => handleProgressClick(true)}>
                     <View>
-                  <TapGestureHandler onActivated={() => handleProgressClick(false)}>
-                    <View style={styles.progressContainer}>
-                      {progressTime === 1 ? (
-                        <Ionicons name="checkmark-circle-sharp" size={40} color="green" />
-                      ) : progressTime === 0 ? (
-                        <Ionicons name="square-outline" size={40} color="black" />
-                      ) : (
-                        <CircularProgress progress={progressTime} size={40} />
-                      )}
+                      <TapGestureHandler onActivated={() => handleProgressClick(false)}>
+                        <View style={styles.progressContainer}>
+                          {progressTime === 1 ? (
+                            <Ionicons name="checkmark-circle-sharp" size={40} color="green" />
+                          ) : progressTime === 0 ? (
+                            <Ionicons name="square-outline" size={40} color="black" />
+                          ) : (
+                            <CircularProgress progress={progressTime} size={40} />
+                          )}
+                        </View>
+                      </TapGestureHandler>
                     </View>
-                  </TapGestureHandler>
-                  </View>
                   </LongPressGestureHandler>
-                  <Ionicons 
-                    name={genreIcons[task.genre] || "help-circle"} 
-                    size={24} 
-                    color="#007AFF" 
-                    style={styles.genreIcon} 
+                  <Ionicons
+                    name={genreIcons[task.genre]?.name || "help-circle"}
+                    size={24}
+                    color={genreIcons[task.genre]?.color || "#007AFF"}
+                    style={styles.genreIcon}
                   />
                 </View>
                 <Text style={styles.taskName}>{task.task_name}</Text>
@@ -261,7 +259,7 @@ const styles = StyleSheet.create({
   taskHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between', 
+    justifyContent: 'space-between',
     marginBottom: 8,
   },
   progressAndIconContainer: {
@@ -283,7 +281,7 @@ const styles = StyleSheet.create({
   taskDetails: {
     flexDirection: 'row',
     marginTop: 10,
-    marginLeft: 54
+    marginLeft: 54,
   },
   detailText: {
     fontSize: 14,
@@ -296,7 +294,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   genreIcon: {
-    marginTop: 8, 
+    marginTop: 8,
   },
   statusBadge: {
     borderRadius: 8,
@@ -327,6 +325,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-
 
 export default Task;
