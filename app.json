@@ -52,6 +52,9 @@
     },
     "experiments": {
       "baseUrl": "/Organize-Me"
+    },
+    "notification": {
+      "vapidPublicKey": "BK_nAgLxVr5fLRHZbn1NDrdhecDs0FBLq-pFNJX2BYxQ9s9pUCn0NEuHFKvuSg9VfmunU7TgeYQiNcfw_DLv4BY"
     }
   }
 }
