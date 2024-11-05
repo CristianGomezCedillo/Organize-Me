@@ -106,18 +106,26 @@ const TaskList = () => {
 
   const filteredTasks = () => {
     return tasks.filter((task) => {
+      // Safeguard against undefined task
+      if (!task || !task.task_name) return false;
+  
       const taskNameMatch = task.task_name.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      // Early return if taskName does not match
       if (!taskNameMatch) return false;
-
+  
       const dueDate = new Date(task.due_date);
-      if (filterStatus === 'all') return !task.is_completed;
-      if (filterStatus === 'completed') return taskNameMatch && task.is_completed === 1;
-      if (filterStatus === 'pending') return taskNameMatch && !isAfter(new Date(), dueDate);
-      if (filterStatus === 'overdue') return taskNameMatch && !task.is_completed && isAfter(new Date(), dueDate);
-
-      return false;
+      
+      // Check filter status
+      if (filterStatus === 'all') return !task.is_completed; // All tasks
+      if (filterStatus === 'completed') return task.is_completed === 1; // Completed tasks
+      if (filterStatus === 'pending') return !task.is_completed && !isAfter(new Date(), dueDate); // Pending tasks
+      if (filterStatus === 'overdue') return !task.is_completed && isAfter(new Date(), dueDate); // Overdue tasks
+  
+      return false; // Default case
     });
   };
+  
 
   return (
     <View style={styles.container}>

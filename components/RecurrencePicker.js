@@ -2,17 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Picker, TouchableOpacity, StyleSheet } from 'react-native';
 
 const RecurrencePicker = ({ 
-  onChange,
-  initialRepeatType = '',
-  initialRepeatInterval = 1,
-  initialWeeklyDay = [],
-  initialMonthlyOption = '',
-  initialMonthlyDay = null,
-  initialMonthlyWeek = '',
-  initialMonthlyWeekday = '',
-  initialYearlyMonth = 'january',
-  initialYearlyWeek = 'first',
-  initialYearlyWeekday = 'sunday'
+    onChange,
+    initialRepeatType = '',
+    initialRepeatInterval = 1,
+    initialWeeklyDay = [],
+    initialMonthlyOption = '',
+    initialMonthlyDay = '',
+    initialMonthlyWeek = '',
+    initialMonthlyWeekday = '',
+    initialYearlyMonth = 'january',
+    initialYearlyWeek = 'first',
+    initialYearlyWeekday = 'sunday'
 }) => {
   const [repeatType, setRepeatType] = useState(initialRepeatType);
   const [repeatInterval, setRepeatInterval] = useState(initialRepeatInterval);
@@ -27,7 +27,6 @@ const RecurrencePicker = ({
 
   const handleRepeatTypeChange = (type) => {
     setRepeatType(type);
-
     // Reset values when changing repeat types
     setRepeatInterval(1);
     setWeeklyDay([]);
@@ -42,19 +41,20 @@ const RecurrencePicker = ({
 
   const handleChange = () => {
     const pattern = {
-      repeatType,
-      repeatInterval,
-      weeklyDay: repeatType === 'weekly' ? weeklyDay : null,
-      monthlyOption: repeatType === 'monthly' ? monthlyOption : null,
-      monthlyDay: repeatType === 'monthly' && monthlyOption === 'each' ? monthlyDay : null,
-      monthlyWeek: repeatType === 'monthly' && monthlyOption === 'onthe' ? monthlyWeek : null,
-      monthlyWeekday: repeatType === 'monthly' && monthlyOption === 'onthe' ? monthlyWeekday : null,
-      yearlyMonth: repeatType === 'yearly' ? yearlyMonth : null,
-      yearlyWeek: repeatType === 'yearly' ? yearlyWeek : null,
-      yearlyWeekday: repeatType === 'yearly' ? yearlyWeekday : null,
+      repeat_type: repeatType,
+      repeat_interval: repeatInterval,
+      weekly_day: repeatType === 'weekly' ? weeklyDay : null,
+      monthly_option: repeatType === 'monthly' ? monthlyOption : null,
+      monthly_day: repeatType === 'monthly' && monthlyOption === 'each' ? monthlyDay : null,
+      monthly_week: repeatType === 'monthly' && monthlyOption === 'onthe' ? monthlyWeek : null,
+      monthly_weekday: repeatType === 'monthly' && monthlyOption === 'onthe' ? monthlyWeekday : null,
+      yearly_month: repeatType === 'yearly' ? yearlyMonth : null,
+      yearly_week: repeatType === 'yearly' ? yearlyWeek : null,
+      yearly_weekday: repeatType === 'yearly' ? yearlyWeekday : null,
     };
     onChange(pattern);
   };
+  
 
   // Trigger handleChange whenever any relevant state changes
   useEffect(handleChange, [repeatType, repeatInterval, weeklyDay, monthlyOption, monthlyDay, monthlyWeek, monthlyWeekday, yearlyMonth, yearlyWeek, yearlyWeekday]);
