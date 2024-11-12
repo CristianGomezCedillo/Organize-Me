@@ -205,6 +205,7 @@ const TaskList = () => {
           onCreate={async (newTask) => {
             // Add the new task to the local state
             setTasks((prevTasks) => [...prevTasks, newTask]);
+            await fetchTasks(); //Refresh the task list
             closeCreateModal(); // Close modal after creation
           }}
         />
