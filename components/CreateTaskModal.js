@@ -2,20 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, Platform } from 'react-native';
 import { supabase } from './supabaseClient';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import RecurrencePicker from './RecurrencePicker';
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import ReactDatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+//import { useNotifications } from './ScheduledNotification'; // Import the hook we created earlier
 
 
 const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
 
-  const { //required for notification
+ /* const { //required for notification
     scheduleNotification,
     cancelAllNotifications,
     getAllScheduledNotifications
   } = useNotifications();
-
+*/
   const [newTask, setNewTask] = useState({
     task_name: '',
     description: '',
@@ -86,18 +88,20 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
         Alert.alert('Error creating task:', error.message);
       } else {
         Alert.alert('Task created successfully');
+        /*
+        if (Platform.OS !== 'web') {
+          //Schedule a notification for the due date at 10am
+          const notification_date = new Date(newTask.due_date);
+          notification_date.setHours(10, 0, 0, 0);
 
-        //Schedule a notification for the due date at 10am
-        const notification_date = new Date(newTask.due_date);
-        notification_date.setHours(10, 0, 0, 0);
-
-        const id = await scheduleNotification({
-          title: "WAKE UP!",
-          body: "${newTask.task_name} due today!",
-          trigger: { date: notification_date }
-        });
-        console.log('Scheduled time notification:', id);
-
+          const id = await scheduleNotification({
+            title: "WAKE UP!",
+            body: "${newTask.task_name} due today!",
+            trigger: { date: notification_date }
+          });
+          console.log('Scheduled time notification:', id);
+        }
+        */
         onClose();
         onCreate();
       }
