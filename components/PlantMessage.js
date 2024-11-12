@@ -26,7 +26,7 @@ const PlantMessage = forwardRef(({ initialText }, ref) => {
             <MaterialIcons name="close" color="#fff" size={22} />
           </Pressable>
           <View style={styles.messageContainer}>
-            <Image source={plant1} style={styles.image}/>
+            <Image source={plant1} style={[styles.image, { width: 130, height:180, resizeMode: 'stretch' }]}/>
             <Text style={styles.text}>{message}</Text>
           </View>
       </View>
@@ -67,7 +67,8 @@ const styles = StyleSheet.create({
   },
   image: {
     width: 100,
-    height: undefined,
+    //height: 100,
+    //aspectRatio: 1.1
     margin: 20, // Remove all margin around the images
     //padding: 20, // Remove all padding inside the images
     //height: undefined,
