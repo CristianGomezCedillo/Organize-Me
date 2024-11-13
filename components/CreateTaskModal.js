@@ -173,7 +173,7 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
                 onChange={handleConfirmTime}
                 showTimeSelect
                 showTimeSelectOnly
-                timeIntervals={15}
+                timeIntervals={1}
                 timeCaption="Time"
                 dateFormat="HH:mm"
                 customInput={
