@@ -22,7 +22,7 @@ const genres = [
   "Planning & Organization"
 ];
 
-const EditTaskModal = ({ visible, task, onClose, onSave }) => {
+const EditTaskModal = ({ visible, task, onClose, onSave, fetchTasks }) => {
   const [taskName, setTaskName] = useState(task.task_name);
   const [description, setDescription] = useState(task.description);
   const [timeToTake, setTimeToTake] = useState(task.time_to_take);
@@ -69,21 +69,12 @@ const EditTaskModal = ({ visible, task, onClose, onSave }) => {
   
     console.log('Updated Task with repeatType:', updatedTask.repeat_type);
   
-    if (isCompleted) {
-      console.log('Task is marked as completed.');
-  
-      // Log the repeatType check for debugging purposes
-      if (updatedTask.repeat_type) {
-        console.log('Repeat Type:', updatedTask.repeat_type);
-  
-        try {
-          await handleRepeatLogic(updatedTask);
-          console.log('handleRepeatLogic executed successfully.');
-        } catch (error) {
-          console.error('Error creating repeating tasks:', error);
-        }
-      } else {
-        console.log('No repeat type defined in updatedTask:', updatedTask.repeat_type);
+    if (isCompleted && updatedTask.repeat_type) {
+      try {
+        await handleRepeatLogic(updatedTask);
+        fetchTasks(); 
+      } catch (error) {
+        console.error('Error creating repeating tasks:', error);
       }
     }
   

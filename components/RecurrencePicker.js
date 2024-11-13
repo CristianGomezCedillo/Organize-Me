@@ -62,7 +62,6 @@ const RecurrencePicker = ({
   return (
     <View style={styles.container}>
       {/* Frequency Picker */}
-      <Text>Frequency:</Text>
       <Picker selectedValue={repeatType} onValueChange={handleRepeatTypeChange} style={styles.picker}>
         <Picker.Item label="Select Frequency" value="" />
         <Picker.Item label="Daily" value="daily" />
@@ -184,8 +183,8 @@ const RecurrencePicker = ({
 };
 
 const styles = StyleSheet.create({
-  container: { padding: 10 },
-  picker: { marginBottom: 10 },
+  container: { padding: 10, zIndex: -9 },
+  picker: { marginBottom: 10, padding: 5 },
   inputRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
   input: { borderBottomWidth: 1, flex: 1, marginRight: 5, padding: 5 },
   dayButton: { padding: 10, marginVertical: 5, backgroundColor: '#f0f0f0' },
