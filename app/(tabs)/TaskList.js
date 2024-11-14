@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef} from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, FlatList, TouchableOpacity, StyleSheet, Text, TextInput } from 'react-native';
 import { supabase } from '../../components/supabaseClient';
 import Task from '../../components/Task';
@@ -84,9 +84,16 @@ const TaskList = () => {
     setCreateModalVisible(true);
   };
 
-  // Close create modal
+  // Close edit modal and refresh list after updating a task
+  const closeEditModal = () => {
+    setEditModalVisible(false);
+    fetchTasks(); // Refresh task list after a task is edited
+  };
+
+  // Close create modal and refresh list after creating a new task
   const closeCreateModal = () => {
     setCreateModalVisible(false);
+    fetchTasks(); // Refresh task list after a new task is created
   };
 
   // Render each task as an item
@@ -188,12 +195,14 @@ const TaskList = () => {
         <EditTaskModal
           task={selectedTask}
           isVisible={isEditModalVisible}
-          onClose={() => setEditModalVisible(false)}
+          onClose={closeEditModal}
           onUpdate={(updatedTask) => {
             setTasks((prevTasks) =>
               prevTasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
             );
-          }} // Update local task state
+            fetchTasks();
+          }}
+          fetchTasks={fetchTasks}
         />
       )}
 
@@ -203,9 +212,9 @@ const TaskList = () => {
           isVisible={isCreateModalVisible}
           onClose={closeCreateModal}
           onCreate={async (newTask) => {
-            // Add the new task to the local state
             setTasks((prevTasks) => [...prevTasks, newTask]);
-            closeCreateModal(); // Close modal after creation
+            fetchTasks();
+            closeCreateModal();
           }}
         />
       )}
@@ -271,9 +280,9 @@ const styles = StyleSheet.create({
   },
   emptyMessage: {
     textAlign: 'center',
+    fontSize: 16,
+    color: '#888',
     marginTop: 20,
-    fontSize: 30,
-    color: '#777',
   },
 });
 
