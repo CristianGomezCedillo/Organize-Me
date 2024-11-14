@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef} from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, FlatList, TouchableOpacity, StyleSheet, Text, TextInput } from 'react-native';
 import { supabase } from '../../components/supabaseClient';
 import Task from '../../components/Task';
@@ -6,6 +6,8 @@ import EditTaskModal from '../../components/EditTaskModal';
 import CreateTaskModal from '../../components/CreateTaskModal';
 import { isAfter } from 'date-fns';
 import PlantMessage from "../../components/PlantMessage";
+import { Link } from 'expo-router';
+import Button from '../../components/Button';
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([]);
@@ -84,9 +86,16 @@ const TaskList = () => {
     setCreateModalVisible(true);
   };
 
-  // Close create modal
+  // Close edit modal and refresh list after updating a task
+  const closeEditModal = () => {
+    setEditModalVisible(false);
+    fetchTasks(); // Refresh task list after a task is edited
+  };
+
+  // Close create modal and refresh list after creating a new task
   const closeCreateModal = () => {
     setCreateModalVisible(false);
+    fetchTasks(); // Refresh task list after a new task is created
   };
 
   // Render each task as an item
@@ -177,23 +186,37 @@ const TaskList = () => {
       )}
 
       <PlantMessage ref={messageRef} initialText="Initial Message" />
+      {/*Organize Me!*/}
+      <Link href="/Calendar">
+            <Button
+              label="Organize Me!"
+              theme="primary"
+              onPress={() => {
+                // Add your navigation or task-adding function here
+              }}
+            />
+            </Link>
 
       {/* Create Task Button */}
       <TouchableOpacity style={styles.fabButton} onPress={handleCreate}>
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
 
+      
+
       {/* Render EditTaskModal */}
       {isEditModalVisible && (
         <EditTaskModal
           task={selectedTask}
           isVisible={isEditModalVisible}
-          onClose={() => setEditModalVisible(false)}
+          onClose={closeEditModal}
           onUpdate={(updatedTask) => {
             setTasks((prevTasks) =>
               prevTasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
             );
-          }} // Update local task state
+            fetchTasks();
+          }}
+          fetchTasks={fetchTasks}
         />
       )}
 
@@ -203,10 +226,9 @@ const TaskList = () => {
           isVisible={isCreateModalVisible}
           onClose={closeCreateModal}
           onCreate={async (newTask) => {
-            // Add the new task to the local state
             setTasks((prevTasks) => [...prevTasks, newTask]);
-            await fetchTasks(); //Refresh the task list
-            closeCreateModal(); // Close modal after creation
+            fetchTasks();
+            closeCreateModal();
           }}
         />
       )}
@@ -272,9 +294,9 @@ const styles = StyleSheet.create({
   },
   emptyMessage: {
     textAlign: 'center',
+    fontSize: 16,
+    color: '#888',
     marginTop: 20,
-    fontSize: 30,
-    color: '#777',
   },
 });
 

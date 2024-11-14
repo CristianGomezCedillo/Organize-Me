@@ -7,17 +7,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import ReactDatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-//import { useNotifications } from './ScheduledNotification'; // Import the hook we created earlier
-
 
 const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
-
- /* const { //required for notification
-    scheduleNotification,
-    cancelAllNotifications,
-    getAllScheduledNotifications
-  } = useNotifications();
-*/
   const [newTask, setNewTask] = useState({
     task_name: '',
     description: '',
@@ -53,6 +44,9 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
 
   const [user, setUser] = useState(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const [isTimePickerVisible, setTimePickerVisibility] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedTime, setSelectedTime] = useState(new Date());
 
   useEffect(() => {
     const today = new Date();
@@ -88,20 +82,6 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
         Alert.alert('Error creating task:', error.message);
       } else {
         Alert.alert('Task created successfully');
-        /*
-        if (Platform.OS !== 'web') {
-          //Schedule a notification for the due date at 10am
-          const notification_date = new Date(newTask.due_date);
-          notification_date.setHours(10, 0, 0, 0);
-
-          const id = await scheduleNotification({
-            title: "WAKE UP!",
-            body: "${newTask.task_name} due today!",
-            trigger: { date: notification_date }
-          });
-          console.log('Scheduled time notification:', id);
-        }
-        */
         onClose();
         onCreate();
       }
@@ -110,14 +90,25 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
     }
   };
 
-  const handleConfirm = (date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const formattedDate = `${year}-${month}-${day}`;
+  const handleConfirmDate = (date) => {
+    setSelectedDate(date);
+    updateDueDate(date, selectedTime);
+  };
 
-    setNewTask({ ...newTask, due_date: formattedDate });
-    setDatePickerVisibility(false);
+  const handleConfirmTime = (time) => {
+    setSelectedTime(time);
+    updateDueDate(selectedDate, time);
+  };
+
+  const updateDueDate = (date, time) => {
+    const combinedDateTime = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      time.getHours(),
+      time.getMinutes()
+    );
+    setNewTask({ ...newTask, due_date: combinedDateTime.toISOString() });
   };
 
   return (
@@ -160,52 +151,79 @@ const CreateTaskModal = ({ isVisible, onClose, onCreate }) => {
               <Picker.Item key={index} label={genre} value={genre} />
             ))}
           </Picker>
+  
+          {/* Date and Time Picker */}
+          {Platform.OS === 'web' ? (
+            <View style={styles.webDateTimeContainer}>
+              <ReactDatePicker
+                selected={selectedDate}
+                onChange={handleConfirmDate}
+                dateFormat="yyyy-MM-dd"
+                customInput={
+                  <TouchableOpacity style={styles.webDatePickerInput}>
+                    <Text style={styles.inputText}>
+                      {selectedDate ? selectedDate.toISOString().split('T')[0] : "Select Date"}
+                    </Text>
+                    <Ionicons name="calendar-outline" size={24} color="#007AFF" />
+                  </TouchableOpacity>
+                }
+              />
+              <ReactDatePicker
+                selected={selectedTime}
+                onChange={handleConfirmTime}
+                showTimeSelect
+                showTimeSelectOnly
+                timeIntervals={1}
+                timeCaption="Time"
+                dateFormat="HH:mm"
+                customInput={
+                  <TouchableOpacity style={styles.webDatePickerInput}>
+                    <Text style={styles.inputText}>
+                      {selectedTime ? selectedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Select Time"}
+                    </Text>
+                    <Ionicons name="time-outline" size={24} color="#007AFF" />
+                  </TouchableOpacity>
+                }
+              />
+            </View>
+          ) : (
+            <View style={styles.datePickerContainer}>
+              <TouchableOpacity onPress={() => setDatePickerVisibility(true)} style={styles.webDatePickerInput}>
+                <Text style={styles.inputText}>
+                  {selectedDate ? selectedDate.toISOString().split('T')[0] : "Select Date"}
+                </Text>
+                <Ionicons name="calendar-outline" size={24} color="#007AFF" />
+              </TouchableOpacity>
 
-          <View style={styles.datePickerContainer}>
-            {Platform.OS === 'web' ? (
-              <View style={styles.webDatePickerContainer}>
-                <ReactDatePicker
-                  selected={newTask.due_date ? new Date(newTask.due_date) : null}
-                  onChange={(date) => {
-                    const year = date.getFullYear();
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const day = String(date.getDate()).padStart(2, '0');
-                    const formattedDate = `${year}-${month}-${day}`;
-                    setNewTask({ ...newTask, due_date: formattedDate });
-                  }}
-                  dateFormat="yyyy-MM-dd"
-                  minDate={new Date()}
-                  customInput={(
-                    <TouchableOpacity style={styles.webDatePickerInput}>
-                      <Text style={styles.inputText}>{newTask.due_date || "Select Date"}</Text>
-                      <Ionicons name="calendar-outline" size={24} color="#007AFF" />
-                    </TouchableOpacity>
-                  )}
-                />
-              </View>
-            ) : (
-              <>
-                <TextInput
-                  placeholder="Due Date (YYYY-MM-DD)"
-                  value={newTask.due_date}
-                  editable={false}
-                  style={styles.input}
-                />
-                <TouchableOpacity onPress={() => setDatePickerVisibility(true)}>
-                  <Ionicons name="calendar-outline" size={24} color="#007AFF" />
-                </TouchableOpacity>
-                <DateTimePickerModal
-                  isVisible={isDatePickerVisible}
-                  mode="date"
-                  onConfirm={handleConfirm}
-                  onCancel={() => setDatePickerVisibility(false)}
-                  date={new Date(newTask.due_date)}
-                  minimumDate={new Date()}
-                  display="default"
-                />
-              </>
-            )}
-          </View>
+              <TouchableOpacity onPress={() => setTimePickerVisibility(true)} style={styles.webDatePickerInput}>
+                <Text style={styles.inputText}>
+                  {newTask.due_date
+                    ? new Date(newTask.due_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    : "Select Time"}
+                </Text>
+                <Ionicons name="time-outline" size={24} color="#007AFF" />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Separate Modals for Date and Time Picker */}
+          <Modal transparent={true} visible={isDatePickerVisible}>
+            <DateTimePickerModal
+              isVisible={isDatePickerVisible}
+              mode="date"
+              onConfirm={handleConfirmDate}
+              onCancel={() => setDatePickerVisibility(false)}
+            />
+          </Modal>
+
+          <Modal transparent={true} visible={isTimePickerVisible}>
+            <DateTimePickerModal
+              isVisible={isTimePickerVisible}
+              mode="time"
+              onConfirm={handleConfirmTime}
+              onCancel={() => setTimePickerVisibility(false)}
+            />
+          </Modal>
 
           {/* Recurrence Picker */}
           <RecurrencePicker
@@ -244,15 +262,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalView: {
-    width: '90%',
+    width: '100%',
+    maxWidth: 650,
     backgroundColor: '#ffffff',
-    borderRadius: 20,
+    borderRadius: 12,
     padding: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalTitle: {
     fontSize: 24,
@@ -262,59 +283,77 @@ const styles = StyleSheet.create({
   },
   input: {
     width: '100%',
-    borderWidth: 1,
+    borderWidth: 3,
     borderColor: '#E5E5EA',
-    borderRadius: 8,
+    borderRadius: 5,
     padding: 12,
     marginBottom: 16,
     fontSize: 16,
   },
   datePickerContainer: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    zIndex: 9999,
     marginBottom: 16,
+    zIndex: 10,
   },
   webDatePickerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
+    zIndex: 10,
   },
   webDatePickerInput: {
-    flex: 1,
-    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 3,
     borderColor: '#E5E5EA',
     borderRadius: 8,
-    padding: 12,
+    padding: 10,
+    zIndex: 9,
+  },
+  inputText: {
+    fontSize: 16,
+    color: '#000',
     marginRight: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+  },
+  picker: {
+    width: '48%',
+    height: 40,
+    marginBottom: 16,
+    fontSize: 16,
+    padding: 10,
+  },
+  textArea: {
+    height: 80,
   },
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 20,
+    width: '100%',
+    zIndex: -9,
   },
   cancelButton: {
     flex: 1,
-    backgroundColor: '#FF3B30',
+    paddingVertical: 12,
+    backgroundColor: 'red',
     borderRadius: 8,
-    padding: 12,
     alignItems: 'center',
+    marginRight: 8,
+    zIndex: -9,
   },
   submitButton: {
     flex: 1,
+    paddingVertical: 12,
     backgroundColor: '#007AFF',
     borderRadius: 8,
-    padding: 12,
     alignItems: 'center',
+    marginLeft: 8,
+    zIndex: -9,
   },
   buttonText: {
     color: '#FFFFFF',
     fontWeight: '600',
-  },
-  inputText: {
     fontSize: 16,
   },
 });

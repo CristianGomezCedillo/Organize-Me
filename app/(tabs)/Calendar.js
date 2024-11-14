@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback} from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput } from 'react-native';
 import { Agenda } from 'react-native-calendars';
 import { supabase } from '../../components/supabaseClient';
@@ -10,6 +11,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { commonStyles } from '../../components/styles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PlantMessage from "../../components/PlantMessage";
+
 
 export default function Home() {
   const [items, setItems] = useState({});
@@ -23,8 +25,15 @@ export default function Home() {
   const [hoursPerDay, setHoursPerDay] = useState([]); //Mon, Tues, Wed, Thu, Fri, Sat, Sun hours available for homework
   const messageRef = useRef(null); //for the plantmessage
   const daysOfWeek = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-  const getTodayDate = () => new Date().toISOString().split('T')[0];
+  //const getTodayDate = () => new Date().toISOString().split('T')[0];
+  const getTodayDate = () => {
+    const today = new Date();
+    today.setDate(today.getDate() - 1);
+    today.setHours(0, 0, 0, 0); // Reset time to midnight in local time
+    return today.toISOString().split('T')[0]; // Convert to ISO string and split to get 'YYYY-MM-DD'
+  };
   const today = getTodayDate();
+
 
    // Function to load hours from AsyncStorage
    const loadHours = async () => {
@@ -71,6 +80,13 @@ export default function Home() {
     fetchUser(); // Fetch the current user
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      console.log("Hello, I'm focused!");
+      fetchTasks(); // Fetch tasks whenever this screen is focused
+    }, [user])
+  );
+
   useEffect(() => {
     if (user) {
       loadHours(); //this also calls fetchTasks
@@ -94,7 +110,7 @@ export default function Home() {
         .from('tasks_table')
         .select('*')
         .or(`user_id.eq.${user?.id},user_id.is.null`) // Show tasks for user and unassigned tasks
-        .neq('is_completed',1);
+        //.neq('is_completed',1); YES we want the completed tasks to appear on the agenda!
         //.order('due_date', { ascending: true });
 
       if (error) throw error;
@@ -110,6 +126,7 @@ export default function Home() {
 
       // Transform tasks into the format expected by the calendar
       const transformedTasks = distributeTasksByDay(tasksWithPriority, hoursPerDay);
+      console.log("Tasks fetched");
       setItems(transformedTasks);
     } catch (error) {
       console.error("Error fetching tasks:", error);
@@ -123,9 +140,10 @@ export default function Home() {
     if(isNaN(f)){return 1;}
     return f; 
   }
-  const distributeTasksByDay = (tasks, maxTasksPerDay) => {
+  const distributeTasksByDay = (tasks) => {
     const transformedItems = {};
     let day = today;
+    let allComplete = true;
     let hoursUsed = 0;
     let hoursPerToday = 0;
     tasks.forEach((task, index) => {
@@ -178,12 +196,15 @@ export default function Home() {
   // Helper function to get the next day's date
   const getNextDay = (dateString) => {
     const date = new Date(dateString);
+    
     date.setDate(date.getDate() + 1);
+    //date.setHours(0,0,0,0);
     return date.toISOString().split('T')[0];
   };
 
     // Handle task deletion
     const handleDelete = (taskId) => {
+      fetchTasks();
       //setTasks(tasks.filter(task => task.id !== taskId));
     };
   
@@ -284,6 +305,7 @@ export default function Home() {
           </View>
         ):(
           <Agenda
+            key={JSON.stringify(items)} //force a re render by supplying a new key each time
             items={items}
             selected={today}
             loadItemsForMonth={loadItems}
