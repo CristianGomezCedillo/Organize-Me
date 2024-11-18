@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Animated, Alert, StyleSheet } from 'react-native';
 import { PanGestureHandler, GestureHandlerRootView, LongPressGestureHandler, TapGestureHandler, State } from 'react-native-gesture-handler'; // Import State
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { Circle } from 'react-native-progress'; // Assuming you're using a Circle from 'react-native-progress'
-import { supabase } from './supabaseClient'; // Update the import according to your setup
-import EditTaskModal from './EditTaskModal'; // Update the import according to your setup
-import { isAfter } from 'date-fns'; // Make sure to install date-fns
+import { Circle } from 'react-native-progress'; 
+import { supabase } from './supabaseClient'; 
+import EditTaskModal from './EditTaskModal'; 
+import { isAfter } from 'date-fns'; 
 import { handleRepeatLogic } from './RepeatLogic';
 
 const genreIcons = {
@@ -19,13 +19,14 @@ const genreIcons = {
   "Hobbies & Recreation": { name: "game-controller", color: "#3bf500" },
   "Errands & Miscellaneous": { name: "cart", color: "#FF6347" },
   "Planning & Organization": { name: "calendar", color: "#4682B4" },
-};
+}
 
 const Task = ({ taskId, onDelete }) => {
   const [task, setTask] = useState(null);
   const [progressTime, setProgressTime] = useState(0);
   const [isEditModalVisible, setEditModalVisible] = useState(false);
   const [translateX] = useState(new Animated.Value(0));
+  const [refreshTasks, setRefreshTasks] = useState(false); // Track task updates
 
   const fetchTask = async () => {
     try {
@@ -50,19 +51,22 @@ const Task = ({ taskId, onDelete }) => {
   
     // Subscribe to real-time changes in the tasks_table
     const channel = supabase
-    .channel('tasks_table_channel')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tasks_table' }, payload => {
-      console.log('New task inserted:', payload.new);
-      // Logic to handle new task inserted, e.g., re-fetching tasks or updating state
-      fetchTask();
-    })
-    .subscribe();
+      .channel('tasks_table_channel')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks_table' }, payload => {
+        console.log('Task change detected:', payload);
+        setRefreshTasks(prev => !prev); // Toggle refresh flag
+      })
+      .subscribe();
+
     // Cleanup subscription on component unmount
     return () => {
       supabase.removeChannel(channel);
     };
   }, [taskId]);
-  
+
+  useEffect(() => {
+    fetchTask(); // Re-fetch task on refresh
+  }, [refreshTasks]);
 
   const handleUpdate = async (updatedTask) => {
     try {
