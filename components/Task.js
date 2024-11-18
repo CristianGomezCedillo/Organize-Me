@@ -9,14 +9,14 @@ import { isAfter } from 'date-fns'; // Make sure to install date-fns
 import { handleRepeatLogic } from './RepeatLogic';
 
 const genreIcons = {
-  "Self-Care & Hygiene": { name: "heart", color: "#FF69B4" },
-  "Household & Chores": { name: "home", color: "#8B4513" },
-  "Finances & Bills": { name: "wallet", color: "#FFD700" },
-  "School & Learning": { name: "school", color: "#1E90FF" },
-  "Work & Career": { name: "briefcase", color: "#000000" },
-  "Physical Health & Fitness": { name: "fitness", color: "#32CD32" },
+  "Self-Care & Hygiene": { name: "heart", color: "#da0b24" },
+  "Household & Chores": { name: "home", color: "#008fff" },
+  "Finances & Bills": { name: "wallet", color: "black" },
+  "School & Learning": { name: "school", color: "#9800b6" },
+  "Work & Career": { name: "briefcase", color: "#a7a7a7" },
+  "Physical Health & Fitness": { name: "fitness", color: "#fff11d" },
   "Social & Relationships": { name: "people", color: "#FF4500" },
-  "Hobbies & Recreation": { name: "game-controller", color: "#8A2BE2" },
+  "Hobbies & Recreation": { name: "game-controller", color: "#3bf500" },
   "Errands & Miscellaneous": { name: "cart", color: "#FF6347" },
   "Planning & Organization": { name: "calendar", color: "#4682B4" },
 };
