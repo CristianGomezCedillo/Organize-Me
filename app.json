@@ -4,7 +4,7 @@
     "slug": "Organize-Me",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "/assets/images/icon.png",
+    "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
     "scheme": "Organize-Me",
     "entryPoint": "./node_modules/expo-router/entry",
@@ -30,7 +30,7 @@
       "web"
     ],
     "web": {
-      "favicon": "/assets/images/organizeme.png"
+      "favicon": "./assets/images/organizeme.png"
     },
     "plugins": [
       "expo-router",

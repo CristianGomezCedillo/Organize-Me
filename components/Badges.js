@@ -1,6 +1,6 @@
-import { StyleSheet, View, ActivityIndicator, Text, FlatList } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, Text, FlatList, Image} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; 
 
 export default function Badges({ date, tasks }) {
     const [badges, setBadges] = useState([]); // State for badges
@@ -15,11 +15,11 @@ export default function Badges({ date, tasks }) {
 
 
     const badgesAvailable = [
-        { id: 0, name: 'Daily Doer', description: "Complete all of today's tasks in the Calendar" },
-        { id: 1, name: 'Weekly Warrior', description: 'Complete all tasks due this week' },
-        { id: 2, name: "Can't Catch Me Slippin", description: 'No overdue tasks this week' },
-        { id: 3, name: 'Dedicated Gardener', description: '7-day task completion streak' },
-        { id: 4, name: 'Baby Plant', description: 'Hooray, you completed one task this week!' },
+        { id: 0, name: 'Daily Doer', description: "Complete all of today's tasks in the Calendar", image: require('../assets/images/Plants/badge_folder/daily_doer.png')},
+        { id: 1, name: 'Weekly Warrior', description: 'Complete all tasks due this week', image: require('../assets/images/Plants/badge_folder/weekly_warrior.png')},
+        { id: 2, name: "Can't Catch Me Slippin", description: 'No overdue tasks this week', image: require('../assets/images/Plants/badge_folder/slippin.png')},
+        { id: 3, name: 'Dedicated Gardener', description: '7-day task completion streak', image: require('../assets/images/Plants/badge_folder/dedicated_gardener.png')},
+        { id: 4, name: 'Baby Plant', description: 'Hooray, you completed one task this week!', image: require('../assets/images/Plants/badge_folder/baby_plant.png')},
     ];
 
     const debugClearData = async () => {
@@ -183,6 +183,7 @@ export default function Badges({ date, tasks }) {
                     renderItem={({ item }) => (
                         <View style={styles.badgeContainer}>
                             <Text style={styles.badgeName}>{item.name}</Text>
+                            <Image source={item.image} style={styles.badgeImage}/>
                             <Text style={styles.badgeDescription}>{item.description}</Text>
                         </View>
                     )}
@@ -221,4 +222,5 @@ const styles = StyleSheet.create({
     badgeContainer: { marginVertical: 10 },
     badgeName: { fontSize: 18 },
     badgeDescription: { fontSize: 14, color: 'gray' },
+    badgeImage: { width: 120, height: 120, marginRight: 10 }, // Adjust size as needed
 });
