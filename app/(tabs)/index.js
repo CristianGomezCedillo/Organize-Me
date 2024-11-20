@@ -12,6 +12,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import PlantMessage from "../../components/PlantMessage";
 import Plant from '../../components/Plant';
 import { Link } from 'expo-router';
+import Badges from '../../components/Badges';
 
 
 // Screen dimensions for graph scaling
@@ -27,6 +28,8 @@ export default function Home() {
   const [streakCount, setStreakCount] = useState(0);
   const [lastLoginDate, setLastLoginDate] = useState(null);
   const [user, setUser] = useState(null);
+  const today = new Date().toISOString().split('T')[0];
+  
 
   // Fetch current user session
   const fetchUser = async () => {
@@ -114,6 +117,7 @@ export default function Home() {
     }
 
     setTasks(data);
+    console.log("Tasks set:", data);
     calculateTaskStats(data);
     setLoading(false);
   };
@@ -139,6 +143,7 @@ export default function Home() {
     setCompletedTasks(completed);
     setOverdueTasks(overdue);
   };
+
 
   // Graph Data
   const taskData = {
@@ -188,7 +193,7 @@ export default function Home() {
           </View>
         ) : (
           <>
-
+            <Badges date={today} tasks={tasks} />
             {/* Pie Chart */}
             <Text style={styles.chartTitle}>Task Breakdown (Pie Chart)</Text>
             <PieChart
@@ -220,10 +225,13 @@ export default function Home() {
             </View>
           </>
         )}
+        
       </View>
 
       <PlantMessage ref={messageRef} initialText="Initial Message" />
       <StatusBar style="auto" />
+
+      
     </ScrollView>
 
     <View style={styles.streakContainer}>
