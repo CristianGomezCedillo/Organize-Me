@@ -6,6 +6,8 @@ import EditTaskModal from '../../components/EditTaskModal';
 import CreateTaskModal from '../../components/CreateTaskModal';
 import { isAfter } from 'date-fns';
 import PlantMessage from "../../components/PlantMessage";
+import { Link } from 'expo-router';
+import Button from '../../components/Button';
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([]);
@@ -184,11 +186,23 @@ const TaskList = () => {
       )}
 
       <PlantMessage ref={messageRef} initialText="Initial Message" />
+      {/*Organize Me!*/}
+      <Link href="/Calendar">
+            <Button
+              label="Organize Me!"
+              theme="primary"
+              onPress={() => {
+                // Add your navigation or task-adding function here
+              }}
+            />
+            </Link>
 
       {/* Create Task Button */}
       <TouchableOpacity style={styles.fabButton} onPress={handleCreate}>
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
+
+      
 
       {/* Render EditTaskModal */}
       {isEditModalVisible && (
