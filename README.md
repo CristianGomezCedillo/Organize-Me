@@ -1,7 +1,7 @@
 # Organize-Me
 
 ## Web Build
-https://latinkiri11.github.io/Organize-Me/
+https://CristianGomezCedillo.github.io/Organize-Me/
 Command to deploy new web build: 
 
 `npm run deploy`
